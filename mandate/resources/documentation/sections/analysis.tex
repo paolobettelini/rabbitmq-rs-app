@@ -1,0 +1,149 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\subsection{Requirements}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-00}} \\
+        \hline
+        \textbf{Name} & Login \& Register \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & The user must be able to create an account and log in. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-00\_0} & The Authentication must be kept alive by a cookie. \\
+        \textbf{Req-00\_1} & The keep-alive cookie must contains a randomly generated token. \\
+        \textbf{Req-00\_2} & The password must be hashed client-side. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-01}} \\
+        \hline
+        \textbf{Name} & Functionality \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & The website must contain a file dropzone. The user must be able to upload an image which will be converted into a 200x200 px webp. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & During the conversion an async progress status must be display. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-02}} \\
+        \hline
+        \textbf{Name} & Message Queues \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & Every message between WebServer and Worker must be through message queues. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-03}} \\
+        \hline
+        \textbf{Name} & List of images \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & When the users logs in a list of the previously converted images must be display. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-00\_0} & Only the last N images are loaded. Another chunk of images is loaded if requested by the user. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-04}} \\
+        \hline
+        \textbf{Name} & Network Structure \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & A loadbalancer (Round Robin) is the entry point for \(N\) WebServers.
+        For each WebServer there exist a RabbitMQ server. There are \(M\) workers which access the queues of the queue servers.
+        Each worker stores data on the same database. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-05}} \\
+        \hline
+        \textbf{Name} & Scalability \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & The network must scale with multiple servers. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\end{document}

@@ -1,0 +1,425 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{parskip}
+\usepackage{fullpage}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    pdftitle={Paolo Bettelini - Diaries},
+    pdfpagemode=FullScreen,
+}
+
+\title{Diaries}
+\author{Paolo Bettelini}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\pagebreak
+
+\section{Diaries}
+
+\subsection{2022-08-29}
+
+Work hours:\\
+\textbf{13:15 - 14:45}: Project assignment
+\\
+\textbf{15:00 - 16:30}: Questions about the project / Rust libraries
+
+Today I was assigned the project and received its description.
+I prepared some questions to ask the manager to clarify my ideas.
+I have decided to use only Rust as my main programming language, if possible
+also for the front-end application (compiling Rust to WebAssembly).
+
+I've started to inquire about a couple of libraries that I (might) use
+\begin{itemize}
+    \item \href{https://github.com/jgallagher/amiquip}{amiquip} Rust RabbitMQ client
+    \item \href{https://github.com/rust-lang/log}{log} Rust logger
+    \item \href{https://github.com/another-rust-load-balancer/another-rust-load-balancer}{another-rust-load-balancer} Rust load balancer
+    \item \href{https://crates.io/crates/warp}{warp} Rust web framework
+    \item \href{https://github.com/launchbadge/sqlx}{sqlx} Rust SQL Toolkit
+    \item \href{https://github.com/tokio-rs/tokio}{tokio} Rust async library
+    \item \href{https://github.com/tokio-rs/tokio}{yew} Rust/WASM frontend framework
+\end{itemize}
+
+I will use the Rust \textit{nigthly} channel.
+
+\subsection{2022-08-30}
+
+Work hours:\\
+\textbf{08:20 - 09:50}: Setup VM
+\\
+\textbf{10:05 - 11:35}: Requirements and documentation
+
+Today I set up a Linux virtual machine as my main workstation.
+I installed \texttt{cargo}, \texttt{texlive-core}, \texttt{texlive-latexextra} and
+\texttt{vs code}.
+\\
+Each server will be on a different machine without GUI.
+
+I then started writing the documentation (information about the project
+and the requirements). I still need to ask a few questions to the manager
+to finish the requirements.
+
+The plan for the next work session is to make a Gantt sheet.
+
+\subsection{2022-08-31}
+
+Work hours:\\
+\textbf{15:00 - 15:45}: Requirements and documentation
+\\
+\textbf{15:45 - 16:30}: Gantt sheet
+
+Today I finished writing the requirements of the project. I created the \texttt{worker}
+Rust project and I created the Gantt sheet.
+
+\pagebreak
+
+\subsection{2022-09-01}
+
+\textbf{08:20 - 09:00}: Helped a classmate with Android Studio \\
+\textbf{09:00 - 10:00}: Vagrantfile with provisioning \\
+\textbf{10:00 - 11:00}: Documentation \\
+\textbf{11:00 - 11:35}: Use case
+
+Today I created a virtual machine using
+Vagrant to host my servers.
+I spent most of the time
+setting up the document for the documentation
+and in the end I wrote the use cases (on paper).
+I will eventually translate them into a PDF.
+
+The plan for the next work session is to start writing the database DDL
+and maybe start writing some queries.
+
+\subsection{2022-09-05}
+
+\textbf{13:15 - 14:15}: Internal network \\
+\textbf{14:15 - 16:15}: Backend worker
+
+Today I set up an internal network within the virtual machines (\texttt{192.168.1.0/24}).
+This is done via Vagrantfile and I made sure everything was working properly.
+
+I started writing some actual code.
+After setting up the dependencies needed I implemented command line arguments.
+The Rust crate \texttt{Clap} manages my CLI arguments (errors if invalid args, help page).
+The only argument so far is the \texttt{--config <CONFIG>} or \texttt{-c} argument.
+
+The config is a TOML file which so far contains the connection information about the database.
+My code parses the config file and initializes the config structure.
+
+I haven't really written the SQL for the database as I should have, but I figured
+it shouldn't be an issue since not many tables are needed and they are quite trivial.
+
+\subsection{2022-09-06}
+
+\textbf{08:25 - 09:50}: Error handling and logging \\
+\textbf{10:05 - 11:20}: Database connection
+
+Today I handled the errors when reading the configuration files and implemented
+the logger. I then wrote the script to setup Mariadb used in the Vagrantfile (install, start daemon, create user).
+I spent the rest of the day trying to make the connection to the database.
+
+However, I'm thinking about dropping the \texttt{sqlx} library and using an ORM instead.
+
+\subsection{2022-09-07}
+
+\textbf{15:00 - 15:30}: Vagrantfile \\
+\textbf{15:30 - 16:15}: Diesel documentation
+
+Today I upgraded the Vagrantfile and starting separating the
+different virtual machines. I decided to drop the \texttt{sqlx}
+library and use \texttt{Diesel} instead (ORM). I spent the rest of the work session
+looking at the Diesel documentation.
+
+The plan for the next work session is to actually integrate
+this library and work with the database.
+
+\pagebreak
+
+\subsection{2022-09-08}
+
+\textbf{08:45 - 10:35}: Diesel installation and setup \\
+\textbf{10:50 - 11:20}: Diesel integration
+
+Today did not quite turn as I hoped it would.
+I started by trying to install \texttt{diesel\_cli} (Diesel command line utility),
+which is used to generate migrations and schemas.
+The command \texttt{cargo install diesel\_cli --no-default-features --features mysql}
+was not working and in the end I was able to install it via \texttt{pacman}.
+Diesel could not connect to the database (fixed user i Vagrant file).
+I then spent the rest of the day trying to integrate this library.
+The migration and schema generation was successful. However, I
+was having some problems with the Rust crate system
+and it took a long time to figure out how to make it compile without errors.
+
+My goal for today was to execute some queries but I did not succeed.
+
+\subsection{2022-09-12}
+
+\textbf{13:15 - 14:45}: Project separation and restructuring \\
+\textbf{15:00 - 16:10}: Diesel integration
+
+Today I separated the \textit{worker} into two separate projects:
+the database library and the executable. Then, I implemented and tested
+the database library by inserting a test user.
+
+More specifically,
+\begin{itemize}
+    \item Completed the SQL structure of the database
+    \item Updated the database models
+    \item Separated the two projects
+    \item Migrations are run at startup if necessary
+    \item If the database authentication is not specified in the config file,
+        it is read from the \texttt{DATABASE\_URL} enviroment variable
+    \item Separated things into their own modules
+\end{itemize}
+
+I am slightly ahead of schedule. I haven't implemented every query and insert that I will need
+but they trivial especially since I am using an ORM library. Inserting data to the database
+and retriving it works.
+
+\subsection{2022-09-13}
+
+\textbf{08:20 - 09:50}: Read documentation \\
+\textbf{10:05 - 11:15}: Vagrant
+
+Today I read the \href{https://github.com/jgallagher/amiquip}{amiquip} documentation and their examples
+to communicate with a RabbitMQ server. In the second half of the work session I
+setup the RabbitMQ VM using Vagrant. The web dashboard works. I haven't yet started writing code
+to interact with queues.
+
+\subsection{2022-09-14}
+
+\textbf{15:00 - 16:15}: \texttt{amiquip}
+
+Today I continued reading the \texttt{amiquip} documentation
+and created the messaging library project (\texttt{messaging}). \\
+Renamed the project \texttt{worker/worker} into \texttt{worker/core}.
+
+\pagebreak
+
+\subsection{2022-09-15}
+
+\textbf{08:20 - 09:00}: Vagrant \\
+\textbf{09:00 - 11:10}: Implementation
+
+I decided to drop the \texttt{amiquip} library and use
+\href{https://github.com/amqp-rs/lapin}{lapin} instead.
+It is a far more developed library and easily supports multi threading.
+I implemented the configuration for the connection to the RabbitMQ server
+and started testing the actual connection. My goal was to publish any payload to any channel,
+but unfortunately, it keeps giving me this error which I am unable to fix \texttt{IOError(Kind(ConnectionAborted))}.
+
+\subsection{2022-09-20}
+
+\textbf{08:20 - 11:20}: Pooling and connection
+
+I tried fixing the connection aborted error with no luck.
+I decided to integrate a pooling system for the connections using
+\href{https://docs.rs/deadpool/latest/deadpool}{deadpool} and
+\href{https://docs.rs/deadpool-lapin/0.10.0/deadpool_lapin}{deadpool-lapin}.
+The pool works and everything seems to be \texttt{async}. The connection
+aborted error is still thrown when a connecton is taken from the pool.
+
+\subsection{2022-09-21}
+
+\textbf{15:00 - 15:30}: Documentation \\
+\textbf{15:30 - 16:20}: Research
+
+Today I continued the documentation
+and fixed the problem with the connection to RabbitMQ.
+The program can establish a connection with the server,
+declare queues, publish messages and consume them.
+I feel ashamed to say, the problem was the service port
+(\texttt{5672} rather than \texttt{15672}, which is the web portal).
+
+\subsection{2022-09-22}
+
+\textbf{08:20 - 9:50}: Logging system \\
+\textbf{10:05 - 10:50}: RabbitMQ test \\
+\textbf{10:50 - 11:25}: Read documentation
+
+Today I fixed the logging system (logging configuration file) and refactored some code.
+I continued testing the RabbitMQ connection (publishing messages and consuming them).
+I then spent the rest of the time by reading the documentation of \texttt{Yew} (frontend framework)
+and \texttt{Warp} (web framework). The next logical step is to implement the \texttt{Request/Reply} pattern
+in messaging.
+
+\subsection{2022-09-26}
+
+\textbf{13:15 - 15:30}: RabbitMQ Request/Reply \\
+\textbf{15:30 - 16:15}: WebServer
+
+Today I restructured the projects folders tree and created the webserver project.
+\begin{itemize}
+    \item \texttt{common/}
+    \begin{itemize}
+        \item \texttt{messaging/}
+        \item \texttt{database/}
+    \end{itemize}
+    \item \texttt{worker/}
+    \item \texttt{webserver/}
+\end{itemize}
+I tried to implement the request/reply pattern with RabbitMQ but it does not work yet.
+The idea is to set the \texttt{correlation\_id} property of the messages that are published with a random
+UUID. Then, wait for a reply in the \texttt{reply\_to} queue with the same correlation ID.
+I spent the rest of the time looking at how to make a WebSocket between \texttt{yew}
+and \texttt{warp}.
+
+\subsection{2022-09-28}
+
+\textbf{15:15 - 16:10}: RabbitMQ Request/Reply \\
+
+The \texttt{Request/Reply} pattern works. The only thing left to do
+with my messaging API is to structure the functions in order to make it
+usable and more generic. The basic operations needed are
+\begin{itemize}
+    \item Publish message
+    \item Publish message and await response
+    \item Publish message and await multiple responses
+\end{itemize}
+
+\subsection{2022-09-29}
+
+\textbf{08:20 - 09:00}: Rust Async \\
+\textbf{09:00 - 11:10}: Messaging and structure
+
+Today I read a tutorial about the \texttt{async} features of Rust.
+I then proceeded to structure my messaging API to make it usable.
+The functions created are: \texttt{publish}, \texttt{public\_and\_await\_reply}
+and \texttt{consume\_messages}. \\
+Throughout this work session I also cleaned the code, fixed the
+formatting, separated things into their own containers and such. \\
+The next step is to start implementing the web page using \texttt{yew}.
+
+\subsection{2022-10-04}
+
+\textbf{08:20 - 09:50}: Yew testing \\
+\textbf{10:05 - 11:05}: Websocket research \\
+\textbf{11:05 - 11:20}: Documentation
+
+Today I started implementing the frontend using WebAssembly.
+I was able to create a test page using the Yew framework that print "Hello"
+(a string that is not written in HTML but rather embedded in the wasm).
+
+I then wanted to start testing a websocket connection, however, I found that that the
+websocket layer in the Yew framework has been completly removed from version \texttt{0.18.0}
+to \texttt{0.19.0} (I am using version \texttt{0.19.0}). This implies that I will need to use
+another library for the websocket connection.
+The desirable thing would be to use the same library both
+for the browser and for the webserver, such that the binary
+interpretation of the messages uses the same structures.
+If this cannot be achieve I need to use another external library
+to interpret the binary messages between the endpoints.
+I haven't yet decided which technology to use.
+
+I also added the \texttt{implement/frontend} subsection in the documentation.
+
+\subsection{2022-10-05}
+
+\textbf{15:00 - 16:15}: Documentation
+
+Today I only focused on the documentation.
+I separated the various sections into their own files,
+implemented the reference system, refactored some code
+and added some sections.
+I haven't really added any content worth mentioning.
+
+\subsection{2022-10-06}
+
+\textbf{08:30 - 11:20}: Web application
+
+Today I continued to refactor the web application code. I separated
+the frontend and webserver into their own projects (\texttt{webapp/} is a cargo workspace containing
+\texttt{frontend/} and \texttt{webserver/}). I set up the log and config system for the webserver.
+
+\subsection{2022-10-10}
+
+\textbf{13:15 - 16:15}: Frontend
+
+Today I focused on making the frontend work. The frontend is separated from the webserver.
+The webserver serves the index, the index then sends a request to the frontend server to ask for its content.
+I followed \href{https://robert.kra.hn/posts/2022-04-03\_rust-web-wasm/}{this} tutorial. \\
+For the next working session I'm going to start implementing the RabbitMQ
+messages, and if possible make the RabbitMQ cluster.
+
+\subsection{2022-10-11}
+
+\textbf{08:20 - 09:50}: Read documentation \\
+\textbf{10:05 - 11:20}: RabbitMQ messages
+
+Today I read the documentation of various Rust crates. In the second
+half of the working session I created the structures that represent the messages
+sent over the RabbitMQ network. I used the \href{https://crates.io/crates/protocol}{protocol} crate to create structures
+that can be serialized and deserialized into binary data. All the structures used in the protocol
+are defined in the project \texttt{common/protocol}.
+
+\subsection{2022-10-12}
+
+\textbf{15:15 - 16:15}: Messaging test
+
+Today I tested the messaging system by serializing my payloads into binary data,
+putting them in a RabbitMQ queue and consuming them. Everything works fine.
+I also refactored some code.
+
+\subsection{2022-10-13}
+
+\textbf{08:20 - 09:50}: RabbitMQ Cluster \\
+\textbf{10:05 - 11:20}: Code and config
+
+Today I read the documentation about RabbitMQ clusters.
+I spoke with my supervisor and we agreed on slightly changing
+the infrastructure of the network. The backend servers
+connect to a load balancer instead of multiple messaging brokers.
+The webservers also connect to the same load balancer which is behind
+every message broker. I then continued to add some boilerplate to my code.
+
+\subsection{2022-10-17}
+
+\textbf{13:15 - 14:45} Design \\
+\textbf{15:00 - 16:15} Logic
+
+Today I started by designing a bit of the website
+(Login Form, Register Form). In the second half of the working session
+I continued the logic of my program, refactored some code and
+implemented the image resizing.
+
+\subsection{2022-10-18}
+
+\textbf{08:20 - 11:20} Logic
+
+Today I only focused on implementing the logic for the backend
+worker. I had lots of problems with the Rust syntax
+but I managed to advance the code a bit. The backend server
+is now able to consume a \texttt{Register Request} message.
+I still have problems with the Rust borrow checker and don't know how to fix them.
+
+\subsection{2022-10-19}
+
+\textbf{15:00 - 15:30} Logic \\
+\textbf{16:00 - 16:20} Logic
+
+Today I kept implementing the backend logic. The backend is able to 
+handle a \texttt{RequestLogin} message. I'm working on handling
+the \texttt{GetTotalImages} (amount) message.
+
+\subsection{2022-10-20}
+
+\textbf{08:20 - 09:50} Logic \\
+\textbf{10:05 - 11:15} Logic
+
+Even today I continued the logic for the worker backend.
+I implemented the necessary database queries with Diesel
+and continued the code which consumes messages.
+This section is almost done and I should finish it
+within the next working session.
+
+\end{document}

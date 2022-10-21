@@ -1,0 +1,153 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{parskip}    % skip line
+\usepackage{fullpage}   % margins
+\usepackage{hyperref}   % hyper references and document setup
+\usepackage{makecell}   % cell scopes for tables
+\usepackage{xcolor}     % colors
+\usepackage{listings}   % format code
+\usepackage{biblatex}   % references
+\usepackage{subfiles}   % project structure - best loaded last in the preamble
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    pdftitle={Paolo Bettelini - Documentation},
+    pdfpagemode=FullScreen,
+}
+
+\addbibresource{./references.bib}
+
+\definecolor{lightgray}{rgb}{0.9,0.9,0.9}
+\definecolor{darkgreen}{rgb}{0, 0.6, 0.2}
+
+
+\lstdefinestyle{generic} {
+    backgroundcolor=\color{lightgray},
+}
+
+\lstdefinestyle{sql} {
+    language=SQL,
+    backgroundcolor=\color{lightgray},
+    breakatwhitespace=false,
+    basicstyle=\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    commentstyle=\color{dkgreen},
+    deletekeywords={...},
+    escapeinside={\%*}{*)},
+    extendedchars=true,
+    keepspaces=true,
+    keywordstyle=\color{blue},
+    morekeywords={*,modify,MODIFY,...},
+    numbers=none,
+    showspaces=false,
+    showstringspaces=false, 
+	showtabs=false,
+    stepnumber=1,
+}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=none,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    stringstyle=\ttfamily\color{red!50!brown},
+    morestring=*[d]{"},
+    backgroundcolor=\color{background}
+}
+
+\title{%
+    RabbitMQ Infrastructure \\
+    \large Documentation
+}
+
+\author{%
+    Paolo Bettelini \\
+    \large Scuola d'Arti e Mestieri di Trevano (SAMT)}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\pagebreak
+
+\tableofcontents
+
+\pagebreak
+
+\section{Introduction}
+
+\subfile{sections/introduction}
+
+\pagebreak
+
+\section{Analysis}
+
+\subfile{sections/analysis}
+
+\pagebreak
+
+\section{Planning}
+
+\subfile{sections/planning}
+
+\pagebreak
+
+\section{Infrastructure}
+
+\subfile{sections/infrastructure}
+
+\pagebreak
+
+\section{Technologies}
+
+\subfile{sections/technologies}
+
+\pagebreak
+
+\section{Implementation}
+
+\subfile{sections/implementation}
+
+\pagebreak
+
+\section{Structure}
+
+\subfile{sections/structure}
+
+\pagebreak
+
+\section{Testing}
+
+\subfile{sections/testing}
+
+\pagebreak
+
+\section{Conclusion}
+
+\subfile{sections/conclusion}
+
+\pagebreak
+
+\section{References}
+
+\nocite{*}
+
+\printbibliography[type=online, heading=subbibliography, title=Sitography]
+
+\end{document}

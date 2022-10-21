@@ -1,0 +1,32 @@
+# LaTeX
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+*.synctex(busy)
+*.dvi
+*.log
+
+# Hyperref
+*.out
+
+# BibTeX
+*-blx.bib
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# OS X
+.DS_Store
+
+# Rust
+target
+
+# WASM
+dist
+
+# Vagrant
+.vagrant

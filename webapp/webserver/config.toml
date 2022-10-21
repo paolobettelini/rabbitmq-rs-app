@@ -1,0 +1,21 @@
+# Alternately, comment the [rabbit] section and
+# set the enviroment variable
+#
+# AMQP_URL=
+[rabbit]
+address = "192.168.1.11"
+port = 5672
+username = "worker"
+password = "root"
+vhost = "vhost"
+
+# Alternately, comment the [log] section and
+# set the enviroment variables (only RUST_LOG is fine)
+#
+# RUST_LOG="info"
+# RUST_LOG_STYLE="auto"
+#
+# See https://doc.servo.org/env_logger/index.html
+[log]
+log = "info"
+style = "auto"

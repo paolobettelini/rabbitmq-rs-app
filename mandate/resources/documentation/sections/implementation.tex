@@ -1,0 +1,54 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\subsection{Frontend}
+
+\subsubsection{Yew}
+
+Rust can be compiled into wasm, this allows frameworks such as Yew to exist.
+Yew is a Rust framework to build web application using WebAssembly.
+
+\subsection{Database}
+
+The databased is an instance of \texttt{MariaDB}.
+
+\begin{lstlisting}[style=sql]
+    CREATE TABLE user (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        mail VARCHAR(50) NOT NULL,
+        username VARCHAR(25) NOT NULL,
+        password BINARY(32) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+\end{lstlisting}
+
+\begin{lstlisting}[style=sql]
+    CREATE TABLE image (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data BLOB NOT NULL,
+        FOREIGN KEY (user_id)
+            REFERENCES user(id)
+                ON UPDATE CASCADE
+                ON DELETE CASCADE
+    );
+\end{lstlisting}
+
+\subsubsection{Diesel}
+
+\texttt{diesel} is an ORM library for the Rust programming language.
+It supports MySQL, Postgres and SQLite.
+
+\subsection{Load Balancer}
+
+\subsection{Backend}
+
+\subsection{Messaging}
+
+\subsubsection{RabbitMQ}
+
+RabbitMQ is a popoular message broker implementing many messaging protocol.
+
+\end{document}
