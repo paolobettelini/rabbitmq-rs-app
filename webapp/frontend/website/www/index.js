@@ -1,3 +1,3 @@
 import * as wasm from "frontend";
 
-wasm.hello();
+wasm.start_websocket();

@@ -1,19 +1,60 @@
+use web_sys::{ErrorEvent, MessageEvent, WebSocket};
+use wasm_bindgen::{JsCast, prelude::*};
+
 mod utils;
+use utils::*;
 
-use wasm_bindgen::prelude::*;
-
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-extern {
-    fn alert(s: &str);
+pub fn start_websocket() -> Result<(), JsValue> {
+    let ws = WebSocket::new("wss://echo.websocket.events")?;
+    
+    // Messages -> ArrayBuffer
+    // Images -> Blob
+    
+    ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
+    
+    let cloned_ws = ws.clone();
+    let onmessage_callback = Closure::<dyn FnMut(_)>::new(move |e: MessageEvent| {
+        if let Ok(buf) = e.data().dyn_into::<js_sys::ArrayBuffer>() {
+            on_arraybuf_message(buf);
+        } else {
+            console_log("Unknown type of message receivd");
+        }
+    });
+    
+    // set message event handler on WebSocket
+    ws.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));
+    // forget the callback to keep it alive
+    onmessage_callback.forget();
+    
+    let onerror_callback = Closure::<dyn FnMut(_)>::new(move |e: ErrorEvent| {
+        console_log!("error event: {:?}", e);
+    });
+    ws.set_onerror(Some(onerror_callback.as_ref().unchecked_ref()));
+    onerror_callback.forget();
+    
+    let cloned_ws = ws.clone();
+    let onopen_callback = Closure::<dyn FnMut()>::new(move || {
+        console_log!("socket opened");
+        
+        /*
+        match cloned_ws.send_with_u8_array(&vec![0, 1, 2, 3]) {
+            Ok(_) => console_log!("binary message successfully sent"),
+            Err(err) => console_log!("error sending message: {:?}", err),
+        }*/
+    });
+    ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
+    onopen_callback.forget();
+    
+    Ok(())
 }
 
-#[wasm_bindgen]
-pub fn hello() {
-    alert("Hello, {{project-name}}!");
+fn on_arraybuf_message(data: js_sys::ArrayBuffer) {
+    console_log!("Received ArrayBuffer: {:?}", data);
+    
+    let raw = js_sys::Uint8Array::new(&data).to_vec();
 }
