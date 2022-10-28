@@ -1,10 +1,3 @@
-use axum::{
-    body::{boxed, Body},
-    http::{Response, StatusCode},
-    response::IntoResponse,
-    routing::get,
-    Router,
-};
 use clap::Parser;
 use log::{error, info, warn};
 use std::{
@@ -19,10 +12,13 @@ use tokio::fs;
 use std::path::PathBuf;
 
 mod args;
-mod rabbit;
+mod app;
 
 use config::{Connectable, WebserverConfig};
 use messaging::mb::*;
+use app::*;
+
+use warp::Filter;
 
 #[tokio::main]
 async fn main() {
@@ -65,26 +61,6 @@ async fn main() {
         }
     };
 
-    // TODO: config
-    let address = "0.0.0.0";
-    let port: u16 = 8081;
-    let static_dir = "./dist".to_string();
-
-    let app = Router::new()
-        .route("/api/hello", get(index))
-        .merge(axum_extra::routing::SpaRouter::new("/assets", static_dir));
-
-    let socket_addr =
-        SocketAddr::from((IpAddr::from_str(address).expect("Invalid IP address"), port));
-
-    info!("Listening on http://{}", socket_addr);
-
-    axum::Server::bind(&socket_addr)
-        .serve(app.into_make_service())
-        .await
-        .expect("Unable to start server");
-}
-
-async fn index() -> impl IntoResponse {
-    "Helloooooooooooooooooooo"
+    let mut app = App::new();
+    app.start(&config.http.www).await;
 }

@@ -17,6 +17,7 @@ pub struct WorkerConfig {
 
 #[derive(Deserialize, Debug)]
 pub struct WebserverConfig {
+    pub http: Http,
     pub rabbit: Option<Rabbit>,
     pub log: Option<Log>,
 }
@@ -37,6 +38,13 @@ pub struct Rabbit {
     pub username: String,
     pub password: String,
     pub vhost: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Http {
+    pub www: String,
+    pub ip: String,
+    pub port: u16
 }
 
 #[derive(Deserialize, Debug)]

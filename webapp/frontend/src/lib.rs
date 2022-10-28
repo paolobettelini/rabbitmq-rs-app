@@ -22,7 +22,7 @@ pub fn start_websocket() -> Result<(), JsValue> {
         if let Ok(buf) = e.data().dyn_into::<js_sys::ArrayBuffer>() {
             on_arraybuf_message(buf);
         } else {
-            console_log("Unknown type of message receivd");
+            console_log!("Unknown type of message receivd");
         }
     });
     

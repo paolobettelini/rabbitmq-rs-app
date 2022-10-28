@@ -422,4 +422,38 @@ and continued the code which consumes messages.
 This section is almost done and I should finish it
 within the next working session.
 
+\subsection{2022-10-24}
+
+\textbf{15:00 - 15:30} Frontend WASM \\
+\textbf{16:00 - 16:20} Frontend WASM
+
+I dropped the Yew framework because I realized that I couldn't do the website 
+like I wanted to. Not using a framework such as Yew means that I have to separate
+HTML templating and WASM execution. The \texttt{frontend} crate compiles to a WASM module.
+The \texttt{frontend/website} contains the HTML website with the \texttt{webpack} files.
+By using \texttt{npm} and \texttt{webpack} I can include the WASM module into the HTML files.
+I tested a WebSocket connection and everything works fine.
+
+\subsection{2022-10-25}
+
+\textbf{08:20 - 09:50} Webserver \\
+\textbf{10:05 - 11:15} Webserver
+
+Today I implemented the templating system using \texttt{warp}.
+I am able to serve static website files from a directory and override
+some of the files (such as \texttt{login.html}, \texttt{index.html}) with
+the server template rendering. I am still having for problems with Rust lifetimes.
+
+\subsection{2022-10-27}
+
+\textbf{08:20 - 09:50} Documentation \\
+\textbf{10:05 - 11:20} Documentation
+
+Today I wrote some documentation.
+\begin{itemize}
+    \item \texttt{Infrastructure} Added network diagram
+    \item \texttt{Technologies} Added Rust and RabbitMQ
+    \item \texttt{Implementation/Messaging/Messages} Started writing the message protocol
+\end{itemize}
+
 \end{document}

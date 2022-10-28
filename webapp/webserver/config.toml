@@ -1,3 +1,8 @@
+[http]
+www = "/home/paolo/www"
+ip = "0.0.0.0"
+port = 8080
+
 # Alternately, comment the [rabbit] section and
 # set the enviroment variable
 #

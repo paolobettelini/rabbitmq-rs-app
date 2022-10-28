@@ -49,6 +49,101 @@ It supports MySQL, Postgres and SQLite.
 
 \subsubsection{RabbitMQ}
 
-RabbitMQ is a popoular message broker implementing many messaging protocol.
+\subsubsection{Messages}
+
+\newcommand{\tline}{
+    \\ \hline
+}
+
+\newcommand{\packetstruct}[1]{
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Field} & \textbf{Type} & \textbf{Description}
+            \tline
+            
+            \if\relax\detokenize{#1}\relax
+            \else
+                #1
+                \tline
+            \fi
+        \end{tabular}
+    \end{center}
+    \egroup{}
+}
+
+\newcommand{\packetenum}[1]{
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Field} & \textbf{Content} & \textbf{Description}
+            \tline
+            
+            \if\relax\detokenize{#1}\relax
+            \else
+                #1
+                \tline
+            \fi
+        \end{tabular}
+    \end{center}
+    \egroup{}
+}
+
+% make links between stuff
+
+\paragraph{RabbitMessage (enum)}
+\packetenum{
+    LoginRequest & LoginRequestData & Login request packet
+    \tline
+    LoginResponse & LoginResponseData & Login response packet
+    \tline
+    RegisterRequest & RegisterRequestData & Register request packet
+    \tline
+    RegisterResponse & RegisterResponseData & Register response packet
+    \tline
+    GetImage & GetImageData & Get image data packet
+    \tline
+    ShrinkAndUpload & ShrinkAndUploadData & Shrink and upload image packet
+    \tline
+    GetTotalImages & GetTotalImagesData & Get total images packet
+    \tline
+    GetTotalImagesResponse & GetTotalImagesResponseData & Get total images response
+    \tline
+    ErrorResponse & ErrorResponseData & Error packet
+}
+
+\paragraph{LoginRequestData (struct)}
+\packetstruct{
+    mail & String & The mail
+    \tline
+    username & String & The username
+    \tline
+    password & Vec<u8> & The password
+}
+
+\paragraph{LoginResponseData}
+\packetenum{
+    Ok & LoginResponseDataOk & Positive login response
+    \tline
+    Err & LoginResponseDataErr & Negative login response
+}
+
+\paragraph{LoginResponseDataOk}
+\packetstruct{
+    token & Vec<u8> & The authentication token
+}
+
+\paragraph{LoginResponseDataErr}
+\packetenum{
+    NotFound & () & User was not not
+    \tline
+    WrongPassword & () & Password was incorrect
+}
+
+TODO...
 
 \end{document}

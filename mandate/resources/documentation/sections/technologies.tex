@@ -4,7 +4,7 @@
 
 \subsection{WebAssembly}
 
-WebAssebly (wasm) is a portable low-level language supported by all majors browsers.
+WebAssembly (wasm) is a portable low-level language supported by all majors browsers.
 It can be used for a variety of things within the browser and can be mixed
 with HTML and JavaScript.
 WebAssembly does not need to be parsed by the browser since it is already
@@ -17,5 +17,31 @@ better in the future and that it will become a standard in
 web development.
 
 \subsection{Rust}
+
+Rust is a generic compiled programming language.
+The code is compiled using LLVM to machine code and its speed
+is comparable to C and C++.
+Rust is the first programming language to guarantee memory safety;
+memory is not manually freed nor garbage collected.
+It is not possible to dereference a null pointer, cause memory segfaults, core dumps
+and memory leaks.
+Code that could cause undefined behavior can still be written,
+but it is strictly bounded in blocks where the compiler is relaxed.
+This relaxation implies that the language is also low-level.
+Another key feature to the performance of Rust is zero cost abstraction,
+which means that generic types and function abstractions are resolved at compile-time.
+Conditional compilation and compile-time computations are also extensively used.
+\\
+There are also many features concerning the programming experience, such as
+advanced metaprogramming and code generation using macros, intelligent compiler,
+dependency system (Cargo), modern syntax and many tools to ease development.
+
+\subsection{RabbitMQ}
+
+RabbitMQ is a popoular message broker implementing many messaging protocols.
+Message brokers such as RabbitMQ can make an infrastructure to route messages,
+validate them and transform them. Messages queue are used
+to store messages. Multiple consumers may consume messages from a queue. \\
+RabbitMQ servers can also form a cluster. \texttt{todo}
 
 \end{document}

@@ -9,5 +9,8 @@ wasm-pack build
 cd website/
 npm install
 npm run build
+# The website files are now available in dist/*
+# Move the static files
+mkdir /home/user/www
+mv dist/* /home/user/www
 ```
-The statis website is available in `dist/`
