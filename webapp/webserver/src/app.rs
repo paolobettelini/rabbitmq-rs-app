@@ -12,7 +12,7 @@ impl App {
         App { tera }
     }
 
-    pub async fn start(&mut self, www: &str) {
+    pub async fn start(&mut self, www: &'static str) {
         self.init_templates(www);
         Self::init_routes(www).await;
     }
@@ -37,11 +37,6 @@ impl App {
         //template!("login", "login.html");
     }
 
-    async fn init_routes(www: &str) {
-        let routes = Self::get_routes();
-        warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
-    }
-
     fn render_template(&mut self, name: &str, context: Context) -> Option<String> {
         /*
             let mut context = Context::new();
@@ -57,9 +52,14 @@ impl App {
         }
     }
 
-    fn get_routes() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-        //let static_files = warp::path("static").and(warp::fs::dir(www));
-        let static_files = warp::path("static").and(warp::fs::dir("/home/paolo/www"));
+    async fn init_routes(www: &'static str) {
+        let routes = Self::get_routes(www);
+        warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
+    }
+
+    fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+        let static_files = warp::path("static").and(warp::fs::dir(www));
+        //let static_files = warp::path("static").and(warp::fs::dir("/home/paolo/www"));
         
         let index_route = warp::path::end().map(|| "index override");
         let login_route = warp::path("login.html").map(|| "login override");

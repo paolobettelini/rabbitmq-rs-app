@@ -2733,6 +2733,7 @@ dependencies = [
  "clap",
  "config",
  "env_logger",
+ "lazy_static",
  "log",
  "messaging",
  "protocol 0.1.0",
