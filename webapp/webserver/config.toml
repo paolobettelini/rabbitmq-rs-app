@@ -1,5 +1,5 @@
 [http]
-www = "/home/paolo/www"
+www = "/home/paolo/Scrivania/github/rabbitmq-rs-app/webapp/frontend/website/dist"
 ip = "0.0.0.0"
 port = 8080
 
