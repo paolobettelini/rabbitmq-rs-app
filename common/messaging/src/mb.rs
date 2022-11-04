@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 type Connection = deadpool::managed::Object<deadpool_lapin::Manager>;
 
+#[derive(Debug)]
 pub struct Rabbit {
     pool: Pool,
 }

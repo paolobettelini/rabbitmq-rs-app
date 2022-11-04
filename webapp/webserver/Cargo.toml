@@ -22,6 +22,7 @@ tower-http = { version = "^0.3", features = ["full"] }
 
 tera = "1.17.1"
 lazy_static = "1.4.0"
+once_cell = "1.16.0"
 
 messaging = { path = "../../common/messaging" }
 config = { path = "../../common/config" }

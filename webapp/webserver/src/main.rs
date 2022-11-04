@@ -12,6 +12,7 @@ use tower_http::services::ServeDir;
 use tokio::{fs, sync::Mutex};
 use std::path::PathBuf;
 use warp::{Filter, Rejection, Reply, reply, http::StatusCode};
+use once_cell::sync::OnceCell;
 
 mod args;
 mod app;
@@ -23,11 +24,13 @@ use app::*;
 #[macro_use]
 extern crate lazy_static;
 
+static APP: OnceCell<Arc<Mutex<App>>> = OnceCell::new();
+
 lazy_static! {
-    pub static ref CONFIG: Box<WebserverConfig> = {
+    static ref CONFIG: Box<WebserverConfig> = {
         // Read CLI arguments
         let args = args::Args::parse();
-
+        
         // Read configuration path
         let config_path = Path::new(&args.config);
         let config = config::parse_config::<_, WebserverConfig>(config_path);
@@ -38,15 +41,9 @@ lazy_static! {
                 std::process::exit(1);
             }
         };
-
+        
         config
     };
-
-    pub static ref APP: Arc<Mutex<App>> = create_app(&CONFIG.http.www);
-}
-
-fn create_app(www: &str) -> Arc<Mutex<App>> {
-    Arc::new(Mutex::new(App::new(www)))
 }
 
 #[tokio::main]
@@ -54,28 +51,38 @@ async fn main() {
     // Setup logging system
     if let Some(log_config) = &CONFIG.log {
         let env = env_logger::Env::default()
-            .filter_or("RUST_LOG", &log_config.log)
-            .write_style_or("RUST_LOG_STYLE", &log_config.style);
-
+        .filter_or("RUST_LOG", &log_config.log)
+        .write_style_or("RUST_LOG_STYLE", &log_config.style);
+        
         env_logger::init_from_env(env);
     } else {
         env_logger::init();
     };
 
-    info!("Starting");
-
-    let mb_connection_url = if let Some(mb) = &CONFIG.rabbit {
-        mb.get_connection_string()
-    } else {
-        if let Ok(var) = env::var("AMQP_URL") {
-            var
+    let app: Arc<Mutex<App>> = {
+        let mb_connection_url = if let Some(mb) = &CONFIG.rabbit {
+            mb.get_connection_string()
         } else {
-            error!("No AMQP connection found in configuration file. You can also set DATABASE_URL");
-            std::process::exit(1);
-        }
-    };
+            if let Ok(var) = env::var("AMQP_URL") {
+                var
+            } else {
+                error!("No AMQP connection found in configuration file. You can also set AMQP_URL");
+                std::process::exit(1);
+            }
+        };
 
+        create_app(&CONFIG.http.www, &mb_connection_url).await
+    };
+    
+    APP.set(app).unwrap();
+    
+    info!("Starting");
+    
     start_service(&CONFIG.http.www).await;
+}
+
+async fn create_app(www: &str, amqp: &str) -> Arc<Mutex<App>> {
+    Arc::new(Mutex::new(App::new(www, amqp).await))
 }
 
 async fn start_service(www: &'static str) {
@@ -83,11 +90,16 @@ async fn start_service(www: &'static str) {
     warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
 }
 
+#[derive(Debug, Deserialize)]
+pub struct User {
+    password: String,
+}
+
 fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let static_files = warp::fs::dir(www);
     
     let index_route = warp::path::end().then(|| async {
-        let content = APP.lock().await.render_index();
+        let content = APP.get().unwrap().lock().await.render_index();
 
         reply::html(content)
     });

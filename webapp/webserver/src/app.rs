@@ -1,11 +1,26 @@
 use tera::{Context, Tera};
+use messaging::mb::*;
+use protocol::{
+    Settings,
+    Parcel,
+    rabbit::*
+};
 
+#[derive(Debug)]
 pub struct App {
     tera: Tera,
+    rabbit: Rabbit,
 }
 
 impl App {
-    pub fn new(www: &str) -> Self {
+    pub async fn new(www: &str, amqp: &str) -> Self {
+        let tera = Self::init_tera(www);
+        let rabbit = Self::init_rabbit(amqp).await;
+
+        App { tera, rabbit }
+    }
+
+    fn init_tera(www: &str) -> Tera {
         let mut tera = Tera::default();
 
         use std::{fs::read_to_string, error::Error, path::Path};
@@ -24,15 +39,15 @@ impl App {
     
         template!("index", "index.html");
         //template!("login", "login.html");
-        
-        App { tera }
+
+        tera
+    }
+
+    async fn init_rabbit(amqp: &str) -> Rabbit {
+        Rabbit::new(amqp.to_owned()).await
     }
 
     fn render_template(&self, name: &str, context: Context) -> Option<String> {
-        /*
-
-        */
-
         let res = self.tera.render(name, &context);
 
         if let Ok(res) = res {
@@ -52,15 +67,7 @@ impl App {
 }
 
 
-
 /*
-use messaging::mb::*;
-use protocol::{
-    Settings,
-    Parcel,
-    rabbit::*
-};
-
 pub trait WebserverRabbit {
     fn send_login_request(&self, data: LoginRequestData);
 
@@ -83,6 +90,4 @@ impl WebserverRabbit for Rabbit {
 
     // todo
 
-}
-
-*/
+}*/
