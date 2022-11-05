@@ -4,7 +4,8 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    login: "./www/login.js"
+    login: "./www/login.js",
+    register: "./www/register.js"
   },
   output: {
     path: path.resolve(__dirname, "dist"),

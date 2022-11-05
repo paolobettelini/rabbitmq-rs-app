@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="forms.css">
+    <link rel="stylesheet" href="/style/forms.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <script src="./login.bundle.js"></script>
+    <script src="/login.bundle.js"></script>
     <title>Progetto</title>
 </head>
 <body>
@@ -14,6 +14,9 @@
         <div class="form_container">
             <div class="title_container">
                 <h2>Login</h2>
+                {% if error %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endif %}
             </div>
             <div class="row clearfix">
                 <div>
@@ -21,7 +24,6 @@
                     <div class="input_field"><span><i aria-hidden="true" class="fa fa-user"></i></span>
                         <input
                             type="text"
-                            oninput="checkUsername()"
                             id="username-temp"
                             placeholder="Username" />
                     </div>
@@ -29,7 +31,6 @@
                     <div class="input_field"><span><i aria-hidden="true" class="fa fa-envelope"></i></span>
                         <input
                             type="email"
-                            oninput="checkEmail()"
                             id="email-temp"
                             placeholder="Email" />
                     </div>
@@ -37,7 +38,6 @@
                     <div class="input_field"><span><i aria-hidden="true" class="fa fa-lock"></i></span>
                         <input
                             type="password"
-                            oninput="checkPassword()"
                             id="password-temp"
                             placeholder="Password" />
                     </div>
@@ -45,7 +45,6 @@
                         class="button"
                         type="submit"
                         id="submit-button"
-                        onclick="submit()"
                         value="Login"
                         disabled/>
                 </div>

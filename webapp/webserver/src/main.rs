@@ -108,26 +108,26 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             reply::html(content)
         });
 
-    let login_page = warp::path("login")
-        .then(|| async {
-            let content = APP
-                .get()
-                .unwrap()
-                .lock()
-                .await
-                .render_login(None);
+    let login_page = warp::path("login").then(|| async {
+        let content = APP.get().unwrap().lock().await.render_login(None);
 
-            reply::html(content)
-        });
+        reply::html(content)
+    });
+
+    let register_page = warp::path("register").then(|| async {
+        let content = APP.get().unwrap().lock().await.render_register(None);
+
+        reply::html(content)
+    });
 
     macro_rules! bad_request {
         () => {
             Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .header("Content-Type", "text/html; charset=UTF-8")
-                    .body("BAD_REQUEST".to_owned())
-                    .unwrap()
-        }
+                .status(StatusCode::BAD_REQUEST)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body("BAD_REQUEST".to_owned())
+                .unwrap()
+        };
     }
 
     macro_rules! read_form {
@@ -138,7 +138,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             } else {
                 return bad_request!();
             };
-        }
+        };
     }
 
     let login_api = warp::path!("api" / "login")
@@ -148,10 +148,6 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             read_form!(form, username);
             read_form!(form, email);
             read_form!(form, password);
-
-            println!("Password {password}");
-            println!("Username {username}");
-            println!("Email {email}");
 
             let password = if let Ok(bytes) = utils::from_base64(password) {
                 bytes
@@ -165,28 +161,23 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 password: password,
             };
 
-            let app = APP.get()
-                .unwrap()
-                .lock()
-                .await;
+            let app = APP.get().unwrap().lock().await;
 
-            let response = app
-                .send_login_request(login_req)
-                .await;
+            let response = app.send_login_request(login_req).await;
 
             match response {
                 LoginResponseData::Ok(data) => {
                     // set cookie
                     let token = utils::to_base64(data.token);
                     let cookie = format!("token={}; Path=/; HttpOnly; Max-Age=1209600", token);
-                    
+
                     return Response::builder()
                         .status(StatusCode::FOUND)
                         .header("Location", "/")
                         .header("Set-Cookie", cookie)
                         .body(String::from(""))
                         .unwrap();
-                },
+                }
                 LoginResponseData::Err(err) => {
                     let content = app.render_login(Some(err));
 
@@ -197,7 +188,6 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                         .unwrap();
                 }
             };
-
         });
 
     let register_api = warp::path!("api" / "register")
@@ -208,44 +198,65 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             read_form!(form, email);
             read_form!(form, password);
 
-            let content = format!("Username: {username}, Password: {password}");
+            let password = if let Ok(bytes) = utils::from_base64(password) {
+                bytes
+            } else {
+                return bad_request!();
+            };
 
-            return Response::builder()
-                .status(StatusCode::FOUND)
-                .header("Location", "/")
-                .body(content)
-                .unwrap();
+            let register_req = RegisterRequestData {
+                mail: email.to_string(),
+                username: username.to_string(),
+                password: password,
+            };
+
+            let app = APP.get().unwrap().lock().await;
+
+            let response = app.send_register_request(register_req).await;
+
+            match response {
+                RegisterResponseData::Ok(data) => {
+                    // set cookie
+                    let token = utils::to_base64(data.token);
+                    let cookie = format!("token={}; Path=/; HttpOnly; Max-Age=1209600", token);
+
+                    return Response::builder()
+                        .status(StatusCode::FOUND)
+                        .header("Location", "/")
+                        .header("Set-Cookie", cookie)
+                        .body(String::from(""))
+                        .unwrap();
+                }
+                RegisterResponseData::Err(err) => {
+                    let content = app.render_register(Some(err));
+
+                    return Response::builder()
+                        .status(StatusCode::OK)
+                        .header("Content-Type", "text/html; charset=UTF-8")
+                        .body(content)
+                        .unwrap();
+                }
+            };
         });
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let login_block = warp::path::path("login.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
-    //let register_block = warp::path::path("register.html")
-    //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    let register_block = warp::path::path("register.html")
+        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
     let templates = index_page
-        .or(login_page);
+        .or(login_page)
+        .or(register_page);
 
-    let methods = login_api
-        .or(register_api);
+    let methods = login_api.or(register_api);
 
     let blocks = index_block
-        .or(login_block);
-    //    .or(register_block);
+        .or(login_block)
+        .or(register_block);
 
-    let routes = methods
-        .or(blocks)
-        .or(templates)
-        .or(static_files);
+    let routes = methods.or(blocks).or(templates).or(static_files);
 
     routes
 }
-
-/*
-            return Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Type", "text/html; charset=UTF-8")
-                .body(content)
-                .unwrap();
-*/

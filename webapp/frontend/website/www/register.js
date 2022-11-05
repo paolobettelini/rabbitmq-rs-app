@@ -3,13 +3,15 @@ import { hash } from 'frontend'
 /* Input elements */
 var username_field = document.getElementById('username-temp');
 var email_field = document.getElementById('email-temp');
-var password_field = document.getElementById('password-temp');
+var password1_field = document.getElementById('password1-temp');
+var password2_field = document.getElementById('password2-temp');
 var submit_btn = document.getElementById('submit-button');
 
 /* Status elements */
 var username_status = document.getElementById('username-status');
 var email_status = document.getElementById('email-status');
-var password_status = document.getElementById('password-status');
+var password1_status = document.getElementById('password1-status');
+var password2_status = document.getElementById('password2-status');
 
 /* Form elements */
 var form = document.getElementById('form');
@@ -19,7 +21,8 @@ var password_form = document.getElementById('password-form');
 
 let emailValid = false;
 let usernameValid = false;
-let passValid = false;
+let pass1Valid = false;
+let pass2Valid = false;
 
 username_field.oninput = () => {
     let regex = /^[a-zA-Z0-9._]{4,20}$/;
@@ -36,7 +39,7 @@ username_field.oninput = () => {
     checkAll();
 }
 
-email_field.oninput = () => {
+email_status.oninput = () => {
     let regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     let email = email_field.value;
 
@@ -51,28 +54,43 @@ email_field.oninput = () => {
     checkAll();
 }
 
-password_field.oninput = () => {
+password1_field.oninput = () => {
     let regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-    let password = password_field.value;
+    let password = password1_field.value;
 
-    if (passValid = password.match(regex)) {
-        password_status.style.color = 'green';
-        password_status.innerHTML = 'Password valid';
+    if (pass1Valid = password.match(regex)) {
+        password1_status.style.color = 'green';
+        password1_status.innerHTML = 'Password valid';
     } else {
-        password_status.style.color = 'red';
-        password_status.innerHTML = password == '' ? '* Required' : 'Invalid password: ^(?=.*[A-Za-z])(?=.*\\d).{8,}$';
+        password1_status.style.color = 'red';
+        password1_status.innerHTML = password == '' ? '* Required' : 'Invalid password: ^(?=.*[A-Za-z])(?=.*\\d).{8,}$';
+    }
+
+    checkAll();
+}
+
+password2_field.oninput = () => {
+    let password1 = password1_field.value;
+    let password2 = password2_field.value;
+
+    if (pass2Valid = password1 == password2) {
+        password2_status.style.color = 'green';
+        password2_status.innerHTML = 'Password matches';
+    } else {
+        password2_status.style.color = 'red';
+        password2_status.innerHTML = password2 == '' ? '* Required' : 'Passwords do not match';
     }
 
     checkAll();
 }
 
 function checkAll() {
-    submit_btn.disabled = !(emailValid && usernameValid && passValid);
+    submit_btn.disabled = !(emailValid && usernameValid && pass1Valid && pass2Valid);
 }
 
-submit_btn.onclick = () => {
+password_form.onclick = () => {
     username_form.value = username_field.value;
-    password_form.value = hash(password_field.value);
+    password_form.value = hash(password1_field.value);
     email_form.value = email_field.value;
     form.submit();
 }

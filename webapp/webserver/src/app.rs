@@ -34,6 +34,7 @@ impl App {
 
         template!("index", "index.html");
         template!("login", "login.html");
+        template!("register", "register.html");
 
         tera
     }
@@ -65,17 +66,31 @@ impl App {
         let mut context = Context::new();
 
         if let Some(err) = status {
-            context.insert("error", &true);
-            context.insert("status", &match err {
-                LoginResponseDataErr::NotFound => "Username not found",
-                LoginResponseDataErr::WrongPassword => "Password is incorrect"
-            });
-        } else {
-            context.insert("error", &false);
-            context.insert("status", "");
+            context.insert(
+                "error",
+                &match err {
+                    LoginResponseDataErr::NotFound => "Username not found",
+                    LoginResponseDataErr::WrongPassword => "Password is incorrect",
+                },
+            );
         }
 
         self.render_template("login", context).unwrap()
+    }
+
+    pub fn render_register(&self, status: Option<RegisterResponseDataErr>) -> String {
+        let mut context = Context::new();
+
+        if let Some(err) = status {
+            context.insert(
+                "error",
+                &match err {
+                    RegisterResponseDataErr::AlreadyExists => "User already exists",
+                },
+            );
+        }
+
+        self.render_template("register", context).unwrap()
     }
 
     pub async fn send_login_request(&self, data: LoginRequestData) -> LoginResponseData {
@@ -83,13 +98,17 @@ impl App {
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
         // self.rabbit.publish("my_queue", &payload).await;
-        LoginResponseData::Ok(LoginResponseDataOk { token: vec![] })
+
+        LoginResponseData::Err(LoginResponseDataErr::NotFound)
+        //LoginResponseData::Ok(LoginResponseDataOk { token: vec![5,5,5,5] })
     }
 
     pub async fn send_register_request(&self, data: RegisterRequestData) -> RegisterResponseData {
         let message = RabbitMessage::RegisterRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
-        RegisterResponseData::Ok(RegisterResponseDataOk { token: vec![5,5,5,5,5,5] })
+        RegisterResponseData::Ok(RegisterResponseDataOk {
+            token: vec![5, 5, 5, 5, 5, 5],
+        })
     }
 }
