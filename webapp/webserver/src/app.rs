@@ -33,7 +33,7 @@ impl App {
         }
 
         template!("index", "index.html");
-        //template!("login", "login.html");
+        template!("login", "login.html");
 
         tera
     }
@@ -59,29 +59,36 @@ impl App {
 
         self.render_template("index", context).unwrap()
     }
-}
 
-/*
-pub trait WebserverRabbit {
-    fn send_login_request(&self, data: LoginRequestData);
+    pub fn render_login(&self, status: Option<LoginResponseDataErr>) -> String {
+        let mut context = Context::new();
 
-    fn send_register_request(&self, data: RegisterRequestData);
-}
+        if let Some(err) = status {
+            context.insert("error", &true);
+            context.insert("status", &match err {
+                LoginResponseDataErr::NotFound => "Username not found",
+                LoginResponseDataErr::WrongPassword => "Password is incorrect"
+            });
+        } else {
+            context.insert("error", &false);
+            context.insert("status", "");
+        }
 
-impl WebserverRabbit for Rabbit {
+        self.render_template("login", context).unwrap()
+    }
 
-    fn send_login_request(&self, data: LoginRequestData) {
+    pub async fn send_login_request(&self, data: LoginRequestData) -> LoginResponseData {
         let message = RabbitMessage::LoginRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
-        // self.publish("my_queue", &payload).await;
+        // self.rabbit.publish("my_queue", &payload).await;
+        LoginResponseData::Ok(LoginResponseDataOk { token: vec![] })
     }
 
-    fn send_register_request(&self, data: RegisterRequestData) {
+    pub async fn send_register_request(&self, data: RegisterRequestData) -> RegisterResponseData {
         let message = RabbitMessage::RegisterRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
+
+        RegisterResponseData::Ok(RegisterResponseDataOk { token: vec![5,5,5,5,5,5] })
     }
-
-    // todo
-
-}*/
+}
