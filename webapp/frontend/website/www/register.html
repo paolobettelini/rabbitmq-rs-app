@@ -60,8 +60,9 @@
         </div>
     </div>
     
-    <form id="form" style="display: none;" action="/register" method="POST">
+    <form id="form" style="display: none;" action="/api/register" method="POST">
         <input id="username-form" type="text" name="username">
+        <input id="email-form" type="text" name="email">
         <input id="password-form" type="password" name="password">
     </form>
 
@@ -82,6 +83,7 @@
         /* Form elements */
         var form = document.getElementById('form');
         var username_form = document.getElementById('username-form');
+        var email_form = document.getElementById('email-form');
         var password_form = document.getElementById('password-form');
 
         let emailValid = false;
@@ -143,7 +145,7 @@
                 password2_status.innerHTML = 'Password matches';
             } else {
                 password2_status.style.color = 'red';
-                password2_status.innerHTML = password2 == '' ? '* Required' : 'Password does not match';
+                password2_status.innerHTML = password2 == '' ? '* Required' : 'Passwords do not match';
             }
 
             checkAll();
@@ -154,7 +156,10 @@
         }
 
         function submit() {
-
+            username_form.value = username_field.value;
+            password_form.value = password1_field.value;
+            email_form.value = email_field.value;
+            form.submit();
         }
     </script>
 </body>

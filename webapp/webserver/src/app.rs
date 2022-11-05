@@ -1,10 +1,6 @@
-use tera::{Context, Tera};
 use messaging::mb::*;
-use protocol::{
-    Settings,
-    Parcel,
-    rabbit::*
-};
+use protocol::{rabbit::*, Parcel, Settings};
+use tera::{Context, Tera};
 
 #[derive(Debug)]
 pub struct App {
@@ -23,20 +19,19 @@ impl App {
     fn init_tera(www: &str) -> Tera {
         let mut tera = Tera::default();
 
-        use std::{fs::read_to_string, error::Error, path::Path};
-    
+        use std::{error::Error, fs::read_to_string, path::Path};
+
         let www = Path::new(www);
-    
+
         macro_rules! template {
-            ($name: tt, $file: tt) => {
-                {
-                    let path = www.join($file);
-                    let content = read_to_string(path).expect("Template file not found");
-                    tera.add_raw_template($name, &content).expect("Template not valid");
-                }
-            };
+            ($name: tt, $file: tt) => {{
+                let path = www.join($file);
+                let content = read_to_string(path).expect("Template file not found");
+                tera.add_raw_template($name, &content)
+                    .expect("Template not valid");
+            }};
         }
-    
+
         template!("index", "index.html");
         //template!("login", "login.html");
 
@@ -64,9 +59,7 @@ impl App {
 
         self.render_template("index", context).unwrap()
     }
-
 }
-
 
 /*
 pub trait WebserverRabbit {
@@ -80,7 +73,7 @@ impl WebserverRabbit for Rabbit {
     fn send_login_request(&self, data: LoginRequestData) {
         let message = RabbitMessage::LoginRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
-        
+
         // self.publish("my_queue", &payload).await;
     }
 

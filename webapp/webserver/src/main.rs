@@ -1,26 +1,26 @@
 use clap::Parser;
 use log::{error, info, warn};
+use once_cell::sync::OnceCell;
+use serde::Deserialize;
+use std::path::PathBuf;
 use std::{
+    collections::HashMap,
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr},
     path::Path,
     str::FromStr,
-    sync::Arc
+    sync::Arc,
 };
-use tower::ServiceExt;
-use tower_http::services::ServeDir;
 use tokio::{fs, sync::Mutex};
-use std::path::PathBuf;
-use warp::{Filter, Rejection, Reply, reply, http::StatusCode, filters::cookie};
-use once_cell::sync::OnceCell;
-use serde::Deserialize;
+use tower_http::services::ServeDir;
+use warp::{filters::cookie, http::{StatusCode, Response}, reply, Filter, Rejection, Reply};
 
-mod args;
 mod app;
+mod args;
 
+use app::*;
 use config::{Connectable, WebserverConfig};
 use messaging::mb::*;
-use app::*;
 
 #[macro_use]
 extern crate lazy_static;
@@ -31,7 +31,7 @@ lazy_static! {
     static ref CONFIG: Box<WebserverConfig> = {
         // Read CLI arguments
         let args = args::Args::parse();
-        
+
         // Read configuration path
         let config_path = Path::new(&args.config);
         let config = config::parse_config::<_, WebserverConfig>(config_path);
@@ -42,7 +42,7 @@ lazy_static! {
                 std::process::exit(1);
             }
         };
-        
+
         config
     };
 }
@@ -52,9 +52,9 @@ async fn main() {
     // Setup logging system
     if let Some(log_config) = &CONFIG.log {
         let env = env_logger::Env::default()
-        .filter_or("RUST_LOG", &log_config.log)
-        .write_style_or("RUST_LOG_STYLE", &log_config.style);
-        
+            .filter_or("RUST_LOG", &log_config.log)
+            .write_style_or("RUST_LOG_STYLE", &log_config.style);
+
         env_logger::init_from_env(env);
     } else {
         env_logger::init();
@@ -74,11 +74,11 @@ async fn main() {
 
         create_app(&CONFIG.http.www, &mb_connection_url).await
     };
-    
+
     APP.set(app).unwrap();
-    
+
     info!("Starting");
-    
+
     start_service(&CONFIG.http.www).await;
 }
 
@@ -93,17 +93,64 @@ async fn start_service(www: &'static str) {
 
 fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let static_files = warp::fs::dir(www);
-    
+
     let index_route = warp::path::end()
         .and(cookie::optional::<String>("token"))
         .and(cookie::optional::<String>("token2"))
         .then(|token, tokn2| async {
-        let content = APP.get().unwrap().lock().await.render_index(token);
+            let content = APP.get().unwrap().lock().await.render_index(token);
 
-        reply::html(content)
-    });
-    let login_route = warp::path("login").map(|| "login override");
-    let register_route = warp::path("register").map(|| "register override");
+            reply::html(content)
+        });
+    
+    macro_rules! read_form {
+        ($form:tt, $var: tt) => {
+            let $var = $form.get(stringify!($var));
+            let $var = if let Some($var) = $var {
+                $var
+            } else {
+                return Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body("BAD_REQUEST".to_owned())
+                    .unwrap();
+            };
+        };
+    }
+
+    let login_route = warp::path!("api" / "login")
+        .and(warp::body::form())
+        .and(warp::post())
+        .map(|form: HashMap<String, String>| {
+            read_form!(form, username);
+            read_form!(form, email);
+            read_form!(form, password);
+
+            let content = format!("Username: {username}, Password: {password}");
+            
+            return Response::builder()
+                .status(StatusCode::FOUND)
+                .header("Location", "/")
+                .body(content)
+                .unwrap();
+        });
+
+    let register_route = warp::path!("api" / "register")
+        .and(warp::body::form())
+        .and(warp::post())
+        .map(|form: HashMap<String, String>| {
+            read_form!(form, username);
+            read_form!(form, email);
+            read_form!(form, password);
+
+            let content = format!("Username: {username}, Password: {password}");
+            
+            return Response::builder()
+                .status(StatusCode::FOUND)
+                .header("Location", "/")
+                .body(content)
+                .unwrap();
+        });
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
@@ -112,17 +159,21 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     //let register_block = warp::path::path("register.html")
     //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
-    let methods = index_route
-        .or(login_route)
-        .or(register_route);
+    let methods = index_route.or(login_route).or(register_route);
 
     let blocks = index_block;
     //    .or(login_block)
     //    .or(register_block);
 
-    let routes = methods
-        .or(blocks)
-        .or(static_files);
+    let routes = methods.or(blocks).or(static_files);
 
     routes
 }
+
+/*
+            return Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(content)
+                .unwrap();
+*/
