@@ -11,8 +11,9 @@ use tower::ServiceExt;
 use tower_http::services::ServeDir;
 use tokio::{fs, sync::Mutex};
 use std::path::PathBuf;
-use warp::{Filter, Rejection, Reply, reply, http::StatusCode};
+use warp::{Filter, Rejection, Reply, reply, http::StatusCode, filters::cookie};
 use once_cell::sync::OnceCell;
+use serde::Deserialize;
 
 mod args;
 mod app;
@@ -90,16 +91,14 @@ async fn start_service(www: &'static str) {
     warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
 }
 
-#[derive(Debug, Deserialize)]
-pub struct User {
-    password: String,
-}
-
 fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let static_files = warp::fs::dir(www);
     
-    let index_route = warp::path::end().then(|| async {
-        let content = APP.get().unwrap().lock().await.render_index();
+    let index_route = warp::path::end()
+        .and(cookie::optional::<String>("token"))
+        .and(cookie::optional::<String>("token2"))
+        .then(|token, tokn2| async {
+        let content = APP.get().unwrap().lock().await.render_index(token);
 
         reply::html(content)
     });
@@ -108,18 +107,18 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
-    let login_block = warp::path::path("login.html")
-        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
-    let register_block = warp::path::path("register.html")
-        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    //let login_block = warp::path::path("login.html")
+    //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    //let register_block = warp::path::path("register.html")
+    //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
     let methods = index_route
         .or(login_route)
         .or(register_route);
 
-    let blocks = index_block
-        .or(login_block)
-        .or(register_block);
+    let blocks = index_block;
+    //    .or(login_block)
+    //    .or(register_block);
 
     let routes = methods
         .or(blocks)

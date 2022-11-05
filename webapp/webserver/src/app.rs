@@ -57,9 +57,10 @@ impl App {
         }
     }
 
-    pub fn render_index(&self) -> String {
+    pub fn render_index(&self, token: Option<String>) -> String {
         let mut context = Context::new();
         context.insert("name", "Rust");
+        context.insert("token", &token.is_some());
 
         self.render_template("index", context).unwrap()
     }
