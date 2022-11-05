@@ -102,8 +102,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
 
     let index_page = warp::path::end()
         .and(cookie::optional::<String>("token"))
-        .and(cookie::optional::<String>("token2"))
-        .then(|token, tokn2| async {
+        .then(|token| async {
             let content = APP.get().unwrap().lock().await.render_index(token);
 
             reply::html(content)
@@ -149,6 +148,10 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             read_form!(form, username);
             read_form!(form, email);
             read_form!(form, password);
+
+            println!("Password {password}");
+            println!("Username {username}");
+            println!("Email {email}");
 
             let password = if let Ok(bytes) = utils::from_base64(password) {
                 bytes
@@ -216,8 +219,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
-    //let login_block = warp::path::path("login.html")
-    //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    let login_block = warp::path::path("login.html")
+        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     //let register_block = warp::path::path("register.html")
     //    .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
@@ -227,8 +230,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let methods = login_api
         .or(register_api);
 
-    let blocks = index_block;
-    //    .or(login_block)
+    let blocks = index_block
+        .or(login_block);
     //    .or(register_block);
 
     let routes = methods

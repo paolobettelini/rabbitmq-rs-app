@@ -7,12 +7,10 @@
     <title>Progetto</title>
 </head>
 <body>
-    <h1>{{ name }}</h1>
-    {% if my_var %}
-        <p>There is a token</p>
+    {% if token %}
+        <p>There is a token {{ token }}</p>
     {% else %}
         <p>No token</p>
     {% endif %}
-    <script src="./bootstrap.js"></script>
 </body>
 </html>

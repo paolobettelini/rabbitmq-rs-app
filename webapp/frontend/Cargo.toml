@@ -18,6 +18,8 @@ wee_alloc = { version = "0.4.5", optional = true }
 protocol = { path = "../../common/protocol" }
 
 js-sys = "0.3.60"
+base64 = "0.13.1"
+sha2 = "0.10.5"
 
 [dependencies.web-sys]
 version = "0.3.60"

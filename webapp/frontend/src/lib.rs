@@ -9,6 +9,13 @@ use utils::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
+pub fn hash(value: String) -> String {
+    let a = to_base64(vec![5,5,5,5,5,5,5,5]);
+    
+    a//to_base64(hash(value))
+}
+
+#[wasm_bindgen]
 pub fn start_websocket() -> Result<(), JsValue> {
     let ws = WebSocket::new("wss://echo.websocket.events")?;
     
