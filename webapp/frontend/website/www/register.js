@@ -39,7 +39,7 @@ username_field.oninput = () => {
     checkAll();
 }
 
-email_status.oninput = () => {
+email_field.oninput = () => {
     let regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     let email = email_field.value;
 
@@ -88,7 +88,7 @@ function checkAll() {
     submit_btn.disabled = !(emailValid && usernameValid && pass1Valid && pass2Valid);
 }
 
-password_form.onclick = () => {
+submit_btn.onclick = () => {
     username_form.value = username_field.value;
     password_form.value = hash(password1_field.value);
     email_form.value = email_field.value;

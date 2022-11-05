@@ -35,6 +35,7 @@ impl App {
         template!("index", "index.html");
         template!("login", "login.html");
         template!("register", "register.html");
+        template!("logout", "logout.html");
 
         tera
     }
@@ -93,20 +94,29 @@ impl App {
         self.render_template("register", context).unwrap()
     }
 
+    pub fn render_logout(&self) -> String {
+        let context = Context::new();
+
+        self.render_template("logout", context).unwrap()
+    }
+
     pub async fn send_login_request(&self, data: LoginRequestData) -> LoginResponseData {
         let message = RabbitMessage::LoginRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
         // self.rabbit.publish("my_queue", &payload).await;
 
-        LoginResponseData::Err(LoginResponseDataErr::NotFound)
-        //LoginResponseData::Ok(LoginResponseDataOk { token: vec![5,5,5,5] })
+        //LoginResponseData::Err(LoginResponseDataErr::NotFound)
+        LoginResponseData::Ok(LoginResponseDataOk {
+            token: vec![5, 5, 5, 5],
+        })
     }
 
     pub async fn send_register_request(&self, data: RegisterRequestData) -> RegisterResponseData {
         let message = RabbitMessage::RegisterRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
+        //RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists)
         RegisterResponseData::Ok(RegisterResponseDataOk {
             token: vec![5, 5, 5, 5, 5, 5],
         })

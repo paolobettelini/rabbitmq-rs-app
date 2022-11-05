@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style/forms.css">
+    <title>Progetto</title>
+</head>
+<body>
+    <div class="form_wrapper">
+        <div class="form_container">
+            <div class="title_container">
+                <h2>Logout</h2>
+                <p>You are currenctly logged in. Do you want to logout?</p>
+            </div>
+            <div class="row clearfix">
+                <div>
+                    <form id="form" action="/api/logout" method="POST">
+                        <input
+                            class="button"
+                            type="submit"
+                            value="Logout"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

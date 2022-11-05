@@ -108,16 +108,60 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             reply::html(content)
         });
 
-    let login_page = warp::path("login").then(|| async {
-        let content = APP.get().unwrap().lock().await.render_login(None);
+    let login_page = warp::path("login")
+        .and(cookie::optional::<String>("token"))
+        .then(|token: Option<String>| async move {
+            let app = APP.get().unwrap().lock().await;
 
-        reply::html(content)
-    });
+            if token.is_some() {
+                return Response::builder()
+                    .status(StatusCode::FOUND)
+                    .header("Location", "/logout")
+                    .body("".to_owned())
+                    .unwrap();
+            }
 
-    let register_page = warp::path("register").then(|| async {
-        let content = APP.get().unwrap().lock().await.render_register(None);
+            let content = app.render_login(None);
 
-        reply::html(content)
+            Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(content)
+                .unwrap()
+        });
+
+    let register_page = warp::path("register")
+        .and(cookie::optional::<String>("token"))
+        .then(|token: Option<String>| async move {
+            let app = APP.get().unwrap().lock().await;
+
+            if token.is_some() {
+                return Response::builder()
+                    .status(StatusCode::FOUND)
+                    .header("Location", "/logout")
+                    .body("".to_owned())
+                    .unwrap();
+            }
+
+            let content = app.render_register(None);
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(content)
+                .unwrap()
+        });
+
+    let logout_page = warp::path("logout").then(|| async {
+        let app = APP.get().unwrap().lock().await;
+
+        let content = app.render_logout();
+
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "text/html; charset=UTF-8")
+            .body(content)
+            .unwrap()
     });
 
     macro_rules! bad_request {
@@ -239,22 +283,34 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             };
         });
 
+    let logout_api = warp::path!("api" / "logout").and(warp::post()).map(|| {
+        let cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+        return Response::builder()
+            .status(StatusCode::FOUND)
+            .header("Location", "/")
+            .header("Set-Cookie", cookie)
+            .body("".to_owned())
+            .unwrap();
+    });
+
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let login_block = warp::path::path("login.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let register_block = warp::path::path("register.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    let logout_block = warp::path::path("logout.html")
+        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
-    let templates = index_page
-        .or(login_page)
-        .or(register_page);
+    let templates = index_page.or(login_page).or(register_page).or(logout_page);
 
-    let methods = login_api.or(register_api);
+    let methods = login_api.or(register_api).or(logout_api);
 
     let blocks = index_block
         .or(login_block)
-        .or(register_block);
+        .or(register_block)
+        .or(logout_block);
 
     let routes = methods.or(blocks).or(templates).or(static_files);
 
