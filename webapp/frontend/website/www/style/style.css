@@ -1,7 +1,43 @@
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+nav li {
+    float: right;
+}
+nav li.home {
+    float: left;
+    background-color: #e1a70a;
+}
+nav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+nav .active {
+    text-decoration: underline;
+}
+nav .active:hover {
+    cursor: default;
+}
+nav li:not(.home) a:hover:not(.active) {
+    background-color: rgb(84, 84, 84);
+}
+
 body {
     font-family: Verdana, Geneva, sans-serif;
     font-size: 14px;
     background: #f2f2f2;
+    margin: 0;
 }
 
 .clearfix:after {
