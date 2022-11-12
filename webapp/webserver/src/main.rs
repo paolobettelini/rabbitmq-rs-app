@@ -12,9 +12,9 @@ use std::{
 };
 use tokio::sync::Mutex;
 use warp::{
-    multipart::{Part, FormData},
     filters::cookie,
     http::{Response, StatusCode},
+    multipart::{FormData, Part},
     reply, Filter, Rejection, Reply,
 };
 
@@ -93,6 +93,7 @@ async fn create_app(www: &str, amqp: &str) -> Arc<Mutex<App>> {
 
 async fn start_service(www: &'static str) {
     let routes = get_routes(www);
+    // TODO from config
     warp::serve(routes).run(([0, 0, 0, 0], 8080)).await;
 }
 
@@ -328,13 +329,12 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 .unwrap()
         });
 
-    let get_image_api = warp::path!("api" / "image" / u16)
-        .then(|index| async move {
-            Response::builder()
-                .status(StatusCode::OK)
-                .body("".to_owned())
-                .unwrap()
-        });
+    let get_image_api = warp::path!("api" / "image" / u16).then(|index| async move {
+        Response::builder()
+            .status(StatusCode::OK)
+            .body("".to_owned())
+            .unwrap()
+    });
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));

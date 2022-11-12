@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error, info};
 
 use database::{db::Database, models::*};
 use messaging::mb::*;
@@ -17,12 +17,17 @@ impl App {
     pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
         let consumer = AppLogic::new(db_connection_url).await;
         let amqp = Rabbit::new(mb_connection_url, consumer).await;
-        
+
         App { amqp }
     }
 
     pub async fn start(&mut self) {
-        self.amqp.consume_messages("queue", "consumer");
+        info!("Starting consumer");
+
+        self.amqp
+            .consume_messages("queue", "consumer")
+            .await
+            .unwrap();
     }
 }
 
@@ -34,7 +39,8 @@ impl MessageConsumer for AppLogic {
     fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
         let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
 
-        info!("Consuming a message {:?}", result);
+        info!("Received Delivery: {:?}", delivery);
+        // info!("Consuming a message {:?}", result);
 
         let response = match result {
             LoginRequest(ref data) => self.on_login_request(&data),
@@ -66,8 +72,7 @@ impl AppLogic {
         //let amqp = Rabbit::new(mb_connection_url, consume).await;
 
         AppLogic {
-            database
-            //amqp: mb_connection,
+            database, //amqp: mb_connection,
         }
     }
 
@@ -155,7 +160,7 @@ impl AppLogic {
 
             return error;
         }
-        
+
         todo!()
     }
 
@@ -198,8 +203,6 @@ impl AppLogic {
     }
 
     fn get_token_for(&mut self, username: &str) -> Vec<u8> {
-        vec![]
-
-        // TODO
+        vec![5, 5, 5, 5, 5]
     }
 }

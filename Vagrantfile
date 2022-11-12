@@ -1,7 +1,7 @@
 Vagrant.configure("2") do |config|
 
   BOX_IMAGE = "generic/arch"
-  BASE_NETWORK = "192.168.1"
+  BASE_NETWORK = "192.168.56"
   
   PROXY_HTTP = "http://10.0.2.2:7777"
   PROXY_HTTPS = "http://10.0.2.2:7777"
@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config|
 
     subconfig.vm.network :private_network,
       ip: "#{DB_SERVER_IP}",
-      virtualbox__intnet: true
+      adapter: 2
 
     subconfig.vm.hostname = "server.db"
     subconfig.ssh.insert_key = SSH_INSERT_KEY
@@ -69,7 +69,7 @@ Vagrant.configure("2") do |config|
 
     subconfig.vm.network :private_network,
       ip: "#{MB_SERVER_IP}",
-      virtualbox__intnet: true
+      adapter: 2
 
     subconfig.vm.network "forwarded_port", guest: 15672, host: 15672
 
@@ -120,7 +120,7 @@ Vagrant.configure("2") do |config|
 
     subconfig.vm.network :private_network,
       ip: "#{WEB_SERVER_IP}",
-      virtualbox__intnet: true
+      adapter: 2
 
     subconfig.vm.hostname = "server.web"
     subconfig.ssh.insert_key = SSH_INSERT_KEY

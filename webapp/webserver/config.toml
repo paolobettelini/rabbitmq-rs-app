@@ -1,5 +1,5 @@
 [http]
-www = "/home/paolo/Desktop/prototipo-rabbitmq/webapp/frontend/website/dist"
+www = "/home/paolo/Scrivania/github/rabbitmq-rs-app/webapp/frontend/website/dist"
 ip = "0.0.0.0"
 port = 8080
 
@@ -8,7 +8,7 @@ port = 8080
 #
 # AMQP_URL=
 [rabbit]
-address = "192.168.1.11"
+address = "192.168.56.11"
 port = 5672
 username = "worker"
 password = "root"

@@ -5,7 +5,7 @@ use tera::{Context, Tera};
 #[derive(Debug)]
 pub struct App {
     tera: Tera,
-    rabbit: Rabbit,
+    rabbit: Rabbit<()>,
 }
 
 impl App {
@@ -41,8 +41,8 @@ impl App {
         tera
     }
 
-    async fn init_rabbit(amqp: &str) -> Rabbit {
-        Rabbit::new(amqp.to_owned()).await
+    async fn init_rabbit(amqp: &str) -> Rabbit<()> {
+        Rabbit::<()>::new(amqp.to_owned(), ()).await
     }
 
     fn render_template(&self, name: &str, context: Context) -> Option<String> {
@@ -111,21 +111,41 @@ impl App {
         let message = RabbitMessage::LoginRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
-        // self.rabbit.publish("my_queue", &payload).await;
+        let answer = self
+            .rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
 
+        if let Ok(data) = answer {
+            let res = LoginResponseData::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            res
+        } else {
+            // TODO server error
+            LoginResponseData::Err(LoginResponseDataErr::NotFound)
+        }
         //LoginResponseData::Err(LoginResponseDataErr::NotFound)
-        LoginResponseData::Ok(LoginResponseDataOk {
-            token: vec![5, 5, 5, 5],
-        })
+        //LoginResponseData::Ok(LoginResponseDataOk {
+        //    token: vec![5, 5, 5, 5],
+        //})
     }
 
     pub async fn send_register_request(&self, data: RegisterRequestData) -> RegisterResponseData {
         let message = RabbitMessage::RegisterRequest(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
-        //RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists)
-        RegisterResponseData::Ok(RegisterResponseDataOk {
-            token: vec![5, 5, 5, 5, 5, 5],
-        })
+        let answer = self
+            .rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
+
+        if let Ok(data) = answer {
+            let res = RegisterResponseData::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            res
+        } else {
+            // TODO server error
+            RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists)
+        }
     }
 }

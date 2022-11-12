@@ -16,6 +16,13 @@ pub trait MessageConsumer {
     fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>>;
 }
 
+/// Generic type for instances that do not consume
+impl MessageConsumer for () {
+    fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
+        None
+    }
+}
+
 #[derive(Debug)]
 pub struct Rabbit<F: MessageConsumer> {
     pool: Pool,
@@ -29,8 +36,8 @@ impl<F: MessageConsumer> Rabbit<F> {
 
         let pool: Pool = deadpool::managed::Pool::builder(manager)
             .max_size(10)
-            .build()
-            .unwrap();
+        .build()
+        .unwrap();
 
         Self { pool, consumer }
     }
@@ -67,72 +74,73 @@ impl<F: MessageConsumer> Rabbit<F> {
 
     pub async fn publish_and_await_reply(
         &self,
-        queue_name: &str,
+        publish_queue: &str,
         consumer_name: &str,
         payload: &[u8],
-        reply_consumer: fn(&Delivery),
-    ) -> std::result::Result<PublisherConfirm, Box<dyn Error>> {
+    ) -> std::result::Result<Vec<u8>, Box<dyn Error>> {
         let connection = get_rmq_con(self.pool.clone()).await?;
 
         let channel = connection.create_channel().await?;
 
-        let queue = channel
+        /*let queue = channel
             .queue_declare(
                 queue_name,
                 QueueDeclareOptions::default(),
                 FieldTable::default(),
             )
-            .await?;
+            .await?;*/
 
-        let corr_id = Uuid::new_v4().to_string();
-        let corr_id = ShortString::from(corr_id);
-        let properties = BasicProperties::default().with_correlation_id(corr_id);
-        let pub_confirm = channel
-            .basic_publish(
-                "",
-                queue_name,
-                BasicPublishOptions::default(),
-                payload,
-                properties,
-            )
-            .await?;
+        let reply_queue = "amq.rabbitmq.reply-to";
+        let exchange = "";
 
+        let consume_properties = BasicConsumeOptions {
+            no_local: false,
+            no_ack: true, // Important. Reply consumer cannot ACK
+            exclusive: false,
+            nowait: false
+        };
         let mut consumer = channel
             .basic_consume(
-                queue_name,
+                reply_queue,
                 consumer_name,
-                BasicConsumeOptions::default(),
+                consume_properties,
                 FieldTable::default(),
             )
             .await?;
 
-        while let Some(delivery) = consumer.next().await {
-            if let Ok(delivery) = delivery {
-                let properties = &delivery.properties;
-                if let Some(corr_id) = properties.correlation_id() {
-                    reply_consumer(&delivery);
+        let basic_properties = BasicProperties::default()
+            .with_reply_to(ShortString::from(reply_queue));
+        let pub_confirm = channel
+            .basic_publish(
+                exchange,
+                publish_queue,
+                BasicPublishOptions::default(),
+                payload,
+                basic_properties,
+            )
+            .await?;
 
-                    // Ack if the message is consumed
-                    channel
-                        .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
-                        .await?;
-
-                    break;
+        loop {
+            if let Some(delivery) = consumer.next().await {
+                if let Ok(delivery) = delivery {
+                    //let properties = &delivery.properties;
+                    //if let Some(corr_id) = properties.correlation_id() {
+                        //if corr_id = uui {
+                            return Ok(delivery.data);
+                        //}
+                    //}
                 }
             }
         }
 
-        Ok(pub_confirm)
+        //Ok(pub_confirm)
     }
 
     pub async fn consume_messages(
         &mut self,
         queue_name: &str,
         consumer_name: &str,
-        //mut message_consumer: F,
     ) -> std::result::Result<(), Box<dyn Error>>
-    //where
-    //    F: FnMut(&Delivery) -> Option<Vec<u8>>,
     {
         let connection = get_rmq_con(self.pool.clone()).await?;
 
@@ -157,15 +165,29 @@ impl<F: MessageConsumer> Rabbit<F> {
 
         while let Some(delivery) = consumer.next().await {
             if let Ok(delivery) = delivery {
-                //let answer = message_consumer(&delivery);
                 let answer = self.consumer.consume(&delivery);
+                let properties = delivery.properties;
+
+                if let Some(reply_queue) = properties.reply_to() {
+                    if let Some(answer) = answer {
+                        // Publish answer to `reply_to` queue
+                        let exchange = "";
+                        let pub_confirm = channel
+                            .basic_publish(
+                                exchange,
+                                reply_queue.as_str(),
+                                BasicPublishOptions::default(),
+                                &answer,
+                                BasicProperties::default(),
+                            )
+                            .await?;
+                    }
+                }
+
                 // Ack the message
                 channel
                     .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
                     .await?;
-
-                // Reply with UUID and correct queue if present
-                // Respond with answer
             }
         }
 
