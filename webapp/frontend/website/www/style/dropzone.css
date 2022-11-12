@@ -1,0 +1,14 @@
+#dropzone {
+    justify-content: center;
+    align-items:center;
+    border: 1px solid white;
+    border-radius: 5px;
+    height: 100%;
+    width: 100%;
+}
+#dz-container {
+    padding-top: 20vh;
+    padding-left: 16.65vw;
+    height: 40vh;
+    width: 66.6vw;
+}

@@ -10,9 +10,19 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn hash(value: String) -> String {
-    let a = to_base64(vec![5,5,5,5,5,5,5,5]);
+    let data = value.as_bytes().to_vec();
+
+    let digest = sha256(&data);
+
+    to_base64(digest)
+}
+
+#[wasm_bindgen]
+pub fn translate(data: Vec<u8>) -> String {
+    // Translate protocol packet and return .to_string
+    // (implement Display trait)
     
-    a//to_base64(hash(value))
+    String::from("")
 }
 
 #[wasm_bindgen]

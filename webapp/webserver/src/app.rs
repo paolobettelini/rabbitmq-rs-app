@@ -19,7 +19,7 @@ impl App {
     fn init_tera(www: &str) -> Tera {
         let mut tera = Tera::default();
 
-        use std::{error::Error, fs::read_to_string, path::Path};
+        use std::{fs::read_to_string, path::Path};
 
         let www = Path::new(www);
 
@@ -36,6 +36,7 @@ impl App {
         template!("login", "login.html");
         template!("register", "register.html");
         template!("logout", "logout.html");
+        template!("upload", "upload.html");
 
         tera
     }
@@ -98,6 +99,12 @@ impl App {
         let context = Context::new();
 
         self.render_template("logout", context).unwrap()
+    }
+
+    pub fn render_upload(&self) -> String {
+        let context = Context::new();
+
+        self.render_template("upload", context).unwrap()
     }
 
     pub async fn send_login_request(&self, data: LoginRequestData) -> LoginResponseData {

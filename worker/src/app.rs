@@ -32,8 +32,8 @@ impl App {
     pub async fn start(&mut self) {
         let consumer = |data: &Delivery| self.consume(data);
 
-        /* borrow error :(
-        self.amqp
+        //borrow error :(
+        /*self.amqp
             .consume_messages("my_queue", "my_consumer", consumer)
             .await;*/
     }
@@ -105,6 +105,7 @@ impl App {
             return error;
         }
 
+        /*
         if !utils::is_mail_valid(&data.mail) {
             let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
                 RegisterResponseDataErr::InvalidMail,
@@ -119,7 +120,7 @@ impl App {
             ));
 
             return error;
-        }
+        }*/
 
         let user = NewUser {
             mail: &data.mail,

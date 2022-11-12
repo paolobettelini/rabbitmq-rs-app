@@ -1,3 +1,5 @@
+"use strict";
+
 import { hash } from 'frontend'
 
 /* Input elements */

@@ -456,4 +456,68 @@ Today I wrote some documentation.
     \item \texttt{Implementation/Messaging/Messages} Started writing the message protocol
 \end{itemize}
 
+\subsection{2022-11-07}
+
+\textbf{13:15 - 14:45} Webserver routes \\
+\textbf{15:00 - 16:15} Frontend
+
+Today I worked on the frontend website and the webserver. \\
+The webserver now supports the following routes
+\begin{itemize}
+    \item \textbf{/} \(\rightarrow\) Serve index page
+    \item \textbf{/register} \(\rightarrow\) Serve register page
+    \item \textbf{/login} \(\rightarrow\) Serve login page
+    \item \textbf{/logout} \(\rightarrow\) Serve logout page
+    \item \textbf{/upload} \(\rightarrow\) Serve upload page
+    \item \textbf{/api/register} \(\rightarrow\) Register action
+    \item \textbf{/api/login} \(\rightarrow\) Login action
+    \item \textbf{/api/logout} \(\rightarrow\) Logout action
+    \item \textbf{/<file>} \(\rightarrow\) Serve static file
+    \item \textbf{/index.html} \(\rightarrow\) Block action
+    \item \textbf{/register.html} \(\rightarrow\) Block action
+    \item \textbf{/login.html} \(\rightarrow\) Block action
+    \item \textbf{/logout.html} \(\rightarrow\) Block action
+    \item \textbf{/upload.html} \(\rightarrow\) Block action
+\end{itemize}
+I created the \texttt{register}, \texttt{index}, \texttt{login}, \texttt{logout} and \texttt{upload}
+pages. Every page has a navbar working correctly and the \texttt{login} and \texttt{register}
+pages have forms with appropriate validation. The interaction between the pages works.
+The HTML is templated using the \href{https://github.com/Keats/tera}{tera} library. \\
+The passwords are hashed client-side using WebAssembly (\texttt{sha256} + \texttt{base64}).
+
+The actual communication \textbf{webserver} \(\longleftrightarrow\) \textbf{backend}
+is not done, so the response to login and register actions are hardcoded.
+If the response is negative the register or login page reloads and displays the error. 
+
+The image upload feature is yet to be implemented.
+
+\subsection{2022-11-08}
+
+\textbf{08:20 - 09:50} Documentation \\
+\textbf{10:05 - 11:20} Multipart form
+
+In the first half of the working session I continued the documentation,
+more specifically the \texttt{Implementation} section.
+In the remaining time I started implementing the multipart form for the
+upload feature. I read online documentation and tutorials and also fixed some code.
+
+\subsection{2022-11-09}
+
+\textbf{15:10 - 16:20} Dropzone
+
+Today I started implementing the dropzone feature. The dropzone element
+in the website uses the \href{https://www.dropzone.dev}{dropzone.js} library.
+I created the \texttt{/api/upload} route and made sure the upload was successful.
+
+\subsection{2022-11-10}
+
+\textbf{08:20 - 08:50} Fixed CSS \\
+\textbf{08:50 - 09:20} Helped a classman \\
+\textbf{09:20 - 11:25} Upload feature
+
+Today I continued implementing the upload feature.
+When files are dropped into the dropzone the progress
+for each file is shown. So far only the upload progress to the
+webserver is displayed.
+
 \end{document}

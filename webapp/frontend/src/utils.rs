@@ -14,12 +14,7 @@ extern "C" {
     pub fn log(s: &str);
 }
 
-#[wasm_bindgen]
-extern {
-    pub fn alert(s: &str);
-}
-
-pub fn hash(data: &Vec<u8>) -> Vec<u8> {
+pub fn sha256(data: &Vec<u8>) -> Vec<u8> {
     let res = sha2::Sha256::digest(data);
 
     // let x: [u8; 32] = res.as_slice().try_into().unwrap();

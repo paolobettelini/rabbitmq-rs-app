@@ -5,7 +5,8 @@ const path = require('path');
 module.exports = {
   entry: {
     login: "./www/login.js",
-    register: "./www/register.js"
+    register: "./www/register.js",
+    upload: "./www/upload.js"
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -24,24 +25,3 @@ module.exports = {
     asyncWebAssembly: true
   }
 };
-
-/*
-module.exports = {
-  entry: "./www/bootstrap.js",
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "bootstrap.js",
-  },
-  mode: "development",
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [
-        // { from: "www", to: "www" },
-        "www",
-      ],
-    })
-  ],
-  experiments: {
-    syncWebAssembly: true
-  }
-};*/

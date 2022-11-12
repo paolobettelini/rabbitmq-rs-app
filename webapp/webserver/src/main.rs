@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -8,12 +8,11 @@ use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr},
     path::Path,
-    str::FromStr,
     sync::Arc,
 };
-use tokio::{fs, sync::Mutex};
-use tower_http::services::ServeDir;
+use tokio::sync::Mutex;
 use warp::{
+    multipart::{Part, FormData},
     filters::cookie,
     http::{Response, StatusCode},
     reply, Filter, Rejection, Reply,
@@ -100,6 +99,16 @@ async fn start_service(www: &'static str) {
 fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let static_files = warp::fs::dir(www);
 
+    macro_rules! bad_request {
+        () => {
+            Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body("BAD_REQUEST".to_owned())
+                .unwrap()
+        };
+    }
+
     let index_page = warp::path::end()
         .and(cookie::optional::<String>("token"))
         .then(|token| async {
@@ -152,27 +161,33 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 .unwrap()
         });
 
-    let logout_page = warp::path("logout").then(|| async {
-        let app = APP.get().unwrap().lock().await;
+    let logout_page = warp::path("logout")
+        .and(cookie::cookie::<String>("token"))
+        .then(|token| async move {
+            let app = APP.get().unwrap().lock().await;
 
-        let content = app.render_logout();
+            let content = app.render_logout();
 
-        Response::builder()
-            .status(StatusCode::OK)
-            .header("Content-Type", "text/html; charset=UTF-8")
-            .body(content)
-            .unwrap()
-    });
-
-    macro_rules! bad_request {
-        () => {
             Response::builder()
-                .status(StatusCode::BAD_REQUEST)
+                .status(StatusCode::OK)
                 .header("Content-Type", "text/html; charset=UTF-8")
-                .body("BAD_REQUEST".to_owned())
+                .body(content)
                 .unwrap()
-        };
-    }
+        });
+
+    let upload_page = warp::path("upload")
+        .and(cookie::cookie::<String>("token"))
+        .then(|token| async move {
+            let app = APP.get().unwrap().lock().await;
+
+            let content = app.render_upload();
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(content)
+                .unwrap()
+        });
 
     macro_rules! read_form {
         ($form:tt, $var: tt) => {
@@ -192,6 +207,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             read_form!(form, username);
             read_form!(form, email);
             read_form!(form, password);
+
+            debug!("Register event: [{username}, {email}, {password}]");
 
             let password = if let Ok(bytes) = utils::from_base64(password) {
                 bytes
@@ -241,6 +258,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             read_form!(form, username);
             read_form!(form, email);
             read_form!(form, password);
+
+            debug!("Register event: [{username}, {email}, {password}]");
 
             let password = if let Ok(bytes) = utils::from_base64(password) {
                 bytes
@@ -294,6 +313,29 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             .unwrap();
     });
 
+    // zupzup/warp-upload-download-example
+    let upload_api = warp::path!("api" / "upload")
+        .and(warp::post())
+        .and(warp::multipart::form().max_length(2_500_000))
+        .and(cookie::cookie::<String>("token"))
+        .then(|form: FormData, token| async move {
+            debug!("Receive file");
+            // form.try_collect() :sob:
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .body("".to_owned())
+                .unwrap()
+        });
+
+    let get_image_api = warp::path!("api" / "image" / u16)
+        .then(|index| async move {
+            Response::builder()
+                .status(StatusCode::OK)
+                .body("".to_owned())
+                .unwrap()
+        });
+
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let login_block = warp::path::path("login.html")
@@ -302,15 +344,26 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let logout_block = warp::path::path("logout.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    let upload_block = warp::path::path("upload.html")
+        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
-    let templates = index_page.or(login_page).or(register_page).or(logout_page);
+    let templates = index_page
+        .or(login_page)
+        .or(register_page)
+        .or(logout_page)
+        .or(upload_page);
 
-    let methods = login_api.or(register_api).or(logout_api);
+    let methods = login_api
+        .or(register_api)
+        .or(logout_api)
+        .or(upload_api)
+        .or(get_image_api);
 
     let blocks = index_block
         .or(login_block)
         .or(register_block)
-        .or(logout_block);
+        .or(logout_block)
+        .or(upload_block);
 
     let routes = methods.or(blocks).or(templates).or(static_files);
 

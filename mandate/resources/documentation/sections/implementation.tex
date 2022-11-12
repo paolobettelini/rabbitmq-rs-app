@@ -4,10 +4,39 @@
 
 \subsection{Frontend}
 
-\subsubsection{Yew}
+\subsection{Webserver}
 
-Rust can be compiled into wasm, this allows frameworks such as Yew to exist.
-Yew is a Rust framework to build web application using WebAssembly.
+\subsubsection{Routing}
+
+The webserver
+
+\subsubsection{Templating}
+
+Templating is used to programmatically serve HTML content based on some logic.
+To do so a template engine is needed. The template engine renders the HTML content
+when needed.
+
+I used a template engine library for Rust called
+\href{https://github.com/Keats/tera}{tera} \cite[tera].
+Logic blocks can be integrated in the HTML file like so
+\begin{lstlisting}[language=html]
+<ul>
+{% for user in users %}
+    <li><a href="{{ user.url}}">{{ user.url }}</li>
+{% endfor %}
+</ul>
+\end{lstlisting}
+
+HTML files containing templating needs to be stored in RAM.
+When the webservers starts it loads from the \texttt{www} folder
+every file containing templating code.
+
+\subsubsection{Routing}
+
+The webserver needs to respond to different routes.
+I used a composable Rust framework called rust
+\href{https://github.com/seanmonstar/warp}{warp} \cite{warp}. 
+
 
 \subsection{Database}
 
@@ -58,7 +87,7 @@ It supports MySQL, Postgres and SQLite.
 \newcommand{\packetstruct}[1]{
     \bgroup{}
     \def\arraystretch{1.25}
-    \begin{center}
+    %\begin{center}
         \begin{tabular}{|l|l|l|}
             \hline
             \textbf{Field} & \textbf{Type} & \textbf{Description}
@@ -70,14 +99,14 @@ It supports MySQL, Postgres and SQLite.
                 \tline
             \fi
         \end{tabular}
-    \end{center}
+    %\end{center}
     \egroup{}
 }
 
 \newcommand{\packetenum}[1]{
     \bgroup{}
     \def\arraystretch{1.25}
-    \begin{center}
+    %\begin{center}
         \begin{tabular}{|l|l|l|}
             \hline
             \textbf{Field} & \textbf{Content} & \textbf{Description}
@@ -89,13 +118,16 @@ It supports MySQL, Postgres and SQLite.
                 \tline
             \fi
         \end{tabular}
-    \end{center}
+    %\end{center}
     \egroup{}
 }
 
 % make links between stuff
+\newcommand{\packettitle}[1]{
+    \paragraph{#1} \hphantom{ } \\
+}
 
-\paragraph{RabbitMessage (enum)}
+\packettitle{RabbitMessage (enum)}
 \packetenum{
     LoginRequest & LoginRequestData & Login request packet
     \tline
@@ -116,7 +148,7 @@ It supports MySQL, Postgres and SQLite.
     ErrorResponse & ErrorResponseData & Error packet
 }
 
-\paragraph{LoginRequestData (struct)}
+\packettitle{LoginRequestData (struct)}
 \packetstruct{
     mail & String & The mail
     \tline
@@ -125,25 +157,88 @@ It supports MySQL, Postgres and SQLite.
     password & Vec<u8> & The password
 }
 
-\paragraph{LoginResponseData}
+\packettitle{LoginResponseData}
 \packetenum{
     Ok & LoginResponseDataOk & Positive login response
     \tline
     Err & LoginResponseDataErr & Negative login response
 }
 
-\paragraph{LoginResponseDataOk}
+\packettitle{LoginResponseDataOk}
 \packetstruct{
     token & Vec<u8> & The authentication token
 }
 
-\paragraph{LoginResponseDataErr}
+\packettitle{LoginResponseDataErr}
 \packetenum{
     NotFound & () & User was not not
     \tline
     WrongPassword & () & Password was incorrect
 }
 
-TODO...
+\packettitle{RegisterRequestData}
+\packetstruct{
+    mail & String & The mail
+    \tline
+    username & String 6 The username
+    \tline
+    password & Vec<u8> & The password
+}
+
+\packettitle{RegisterResponseData}
+\packetenum{
+    Ok & (RegisterResponseDataOk) & Positive register response
+    \tline
+    Err & (RegisterResponseDataErr) & Negative register response
+}
+
+\packettitle{RegisterResponseDataOk}
+\packetstruct{
+    token & Vec<u8> & The authentication token
+}
+
+\packettitle{RegisterResponseDataErr}
+\packetenum{
+    AlreadyExists & () & User already exists
+}
+
+\packettitle{GetImageData}
+\packetstruct{
+    username & String & The username
+    \tline
+    token & Vec<u8> & The auth token
+    \tline
+    index & u16 & The image index
+}
+
+\packettitle{ShrinkAndUploadData}
+\packetstruct{
+    username & String & The username
+    \tline
+    token & Vec<u8> & The auth token
+    \tline
+    image & Image 6 The image
+}
+
+\packettitle{GetTotalImagesData}
+\packetstruct{
+    username & String & The username
+    \tline
+    token & Vec<u8> & The auth token
+}
+
+\packettitle{GetTotalImagesResponseData}
+\packetstruct{
+    amount & u32 & The amount of images
+}
+
+\packettitle{ErrorResponseData}
+\packetenum{
+    AuthenticationRequired & () & Authentication failed
+    \tline
+    UnknownUsername & () & Username is unknown
+}
+
+% TODO alias types e.g. Image
 
 \end{document}

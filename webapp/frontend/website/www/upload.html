@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css">
+
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/dropzone.css">
+    <title>Progetto</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li class="home"><a href="/">Home</a></li>
+            <li><a href="/logout">Logout</a></li>
+            <li><a class="active" href="#">Upload</a></li>
+        </ul>
+    </nav>
+
+    <div id="dz-container">
+        <div class="dropzone" id="dropzone">
+            <div class="dz-message" data-dz-message>
+                <span>Click or Drop an image</span>
+            </div>
+        </div>
+        
+        <br><br>
+
+        <div id="status-container">
+    
+        </div>
+    </div>
+
+    <script src="/upload.bundle.js"></script>
+</body>
+</html>

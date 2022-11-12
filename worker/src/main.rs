@@ -39,8 +39,6 @@ async fn main() {
         env_logger::init();
     };
 
-    info!("Starting");
-
     // Read database configuration
     let db_connection_url = if let Some(db) = config.database {
         db.get_connection_string()
@@ -54,6 +52,8 @@ async fn main() {
             std::process::exit(1);
         }
     };
+
+    info!("Starting");
 
     // Read AMQP configuration
     let mb_connection_url = if let Some(mb) = config.rabbit {
@@ -69,5 +69,5 @@ async fn main() {
 
     // Create App
     let mut app = App::new(db_connection_url, mb_connection_url).await;
-    app.start();
+    app.start().await;
 }
