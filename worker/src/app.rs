@@ -10,36 +10,29 @@ use protocol::{
 mod utils;
 
 pub struct App {
-    database: Database,
-    amqp: Rabbit,
+    amqp: Rabbit<AppLogic>,
 }
 
 impl App {
     pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
-        let mut db_connection = Database::new(db_connection_url);
-
-        info!("Running embedded migrations");
-        db_connection.run_embedded_migrations();
-
-        let mb_connection = Rabbit::new(mb_connection_url).await;
-
-        App {
-            database: db_connection,
-            amqp: mb_connection,
-        }
+        let consumer = AppLogic::new(db_connection_url).await;
+        let amqp = Rabbit::new(mb_connection_url, consumer).await;
+        
+        App { amqp }
     }
 
     pub async fn start(&mut self) {
-        let consumer = |data: &Delivery| self.consume(data);
-
-        //borrow error :(
-        /*self.amqp
-            .consume_messages("my_queue", "my_consumer", consumer)
-            .await;*/
+        self.amqp.consume_messages("queue", "consumer");
     }
+}
 
-    fn consume(&mut self, msg: &Delivery) -> Option<Vec<u8>> {
-        let result = RabbitMessage::from_raw_bytes(&msg.data, &Settings::default()).unwrap();
+struct AppLogic {
+    database: Database,
+}
+
+impl MessageConsumer for AppLogic {
+    fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
+        let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
 
         info!("Consuming a message {:?}", result);
 
@@ -59,6 +52,22 @@ impl App {
             Some(res)
         } else {
             None
+        }
+    }
+}
+
+impl AppLogic {
+    pub async fn new(db_connection_url: String) -> Self {
+        let mut database = Database::new(db_connection_url);
+
+        info!("Running embedded migrations");
+        database.run_embedded_migrations();
+
+        //let amqp = Rabbit::new(mb_connection_url, consume).await;
+
+        AppLogic {
+            database
+            //amqp: mb_connection,
         }
     }
 
