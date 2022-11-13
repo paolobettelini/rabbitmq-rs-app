@@ -4,22 +4,18 @@ import { hash } from 'frontend'
 
 /* Input elements */
 var username_field = document.getElementById('username-temp');
-var email_field = document.getElementById('email-temp');
 var password_field = document.getElementById('password-temp');
 var submit_btn = document.getElementById('submit-button');
 
 /* Status elements */
 var username_status = document.getElementById('username-status');
-var email_status = document.getElementById('email-status');
 var password_status = document.getElementById('password-status');
 
 /* Form elements */
 var form = document.getElementById('form');
 var username_form = document.getElementById('username-form');
-var email_form = document.getElementById('email-form');
 var password_form = document.getElementById('password-form');
 
-let emailValid = false;
 let usernameValid = false;
 let passValid = false;
 
@@ -33,21 +29,6 @@ username_field.oninput = () => {
     } else {
         username_status.style.color = 'red';
         username_status.innerHTML = username == '' ? '* Required' : 'Invalid username: ^[a-zA-Z0-9._]{4,20}$';
-    }
-
-    checkAll();
-}
-
-email_field.oninput = () => {
-    let regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    let email = email_field.value;
-
-    if (emailValid = email.match(regex)) {
-        email_status.style.color = 'green';
-        email_status.innerHTML = 'Email valid';
-    } else {
-        email_status.style.color = 'red';
-        email_status.innerHTML = email == '' ? '* Required' : 'Invalid email';
     }
 
     checkAll();
@@ -69,12 +50,11 @@ password_field.oninput = () => {
 }
 
 function checkAll() {
-    submit_btn.disabled = !(emailValid && usernameValid && passValid);
+    submit_btn.disabled = !(usernameValid && passValid);
 }
 
 submit_btn.onclick = () => {
     username_form.value = username_field.value;
     password_form.value = hash(password_field.value);
-    email_form.value = email_field.value;
     form.submit();
 }

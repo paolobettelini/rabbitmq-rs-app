@@ -206,10 +206,9 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .and(warp::post())
         .then(|form: HashMap<String, String>| async move {
             read_form!(form, username);
-            read_form!(form, email);
             read_form!(form, password);
 
-            debug!("Register event: [{username}, {email}, {password}]");
+            debug!("Register event: [{username}, {password}]");
 
             let password = if let Ok(bytes) = utils::from_base64(password) {
                 bytes
@@ -217,11 +216,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 return bad_request!();
             };
 
-            let login_req = LoginRequestData {
-                mail: email.to_string(),
-                username: username.to_string(),
-                password: password,
-            };
+            let username = username.to_string();
+            let login_req = LoginRequestData { username, password };
 
             let app = APP.get().unwrap().lock().await;
 

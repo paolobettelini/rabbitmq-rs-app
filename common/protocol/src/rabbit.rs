@@ -38,7 +38,6 @@ pub enum RabbitMessage {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct LoginRequestData {
-    pub mail: String,
     pub username: String,
     pub password: Vec<u8>,
 }

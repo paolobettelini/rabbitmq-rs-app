@@ -1,5 +1,5 @@
 use messaging::mb::*;
-use protocol::{rabbit::*, Parcel, Settings};
+use protocol::{rabbit::{*, RabbitMessage::*}, Parcel, Settings};
 use tera::{Context, Tera};
 
 #[derive(Debug)]
@@ -116,18 +116,19 @@ impl App {
             .publish_and_await_reply("queue", "consumer", &payload)
             .await;
 
-        if let Ok(data) = answer {
-            let res = LoginResponseData::from_raw_bytes(&data, &Settings::default()).unwrap();
+        let error = LoginResponseData::Err(LoginResponseDataErr::NotFound);
 
-            res
+        if let Ok(data) = answer {
+            let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            if let LoginResponse(data) = res {
+                data
+            } else {
+                error
+            }
         } else {
-            // TODO server error
-            LoginResponseData::Err(LoginResponseDataErr::NotFound)
+            error
         }
-        //LoginResponseData::Err(LoginResponseDataErr::NotFound)
-        //LoginResponseData::Ok(LoginResponseDataOk {
-        //    token: vec![5, 5, 5, 5],
-        //})
     }
 
     pub async fn send_register_request(&self, data: RegisterRequestData) -> RegisterResponseData {
@@ -139,13 +140,18 @@ impl App {
             .publish_and_await_reply("queue", "consumer", &payload)
             .await;
 
-        if let Ok(data) = answer {
-            let res = RegisterResponseData::from_raw_bytes(&data, &Settings::default()).unwrap();
+        let error = RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists);
 
-            res
+        if let Ok(data) = answer {
+            let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            if let RegisterResponse(data) = res {
+                data
+            } else {
+                error
+            }
         } else {
-            // TODO server error
-            RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists)
+            error
         }
     }
 }

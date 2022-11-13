@@ -82,14 +82,6 @@ impl<F: MessageConsumer> Rabbit<F> {
 
         let channel = connection.create_channel().await?;
 
-        /*let queue = channel
-            .queue_declare(
-                queue_name,
-                QueueDeclareOptions::default(),
-                FieldTable::default(),
-            )
-            .await?;*/
-
         let reply_queue = "amq.rabbitmq.reply-to";
         let exchange = "";
 
@@ -123,12 +115,7 @@ impl<F: MessageConsumer> Rabbit<F> {
         loop {
             if let Some(delivery) = consumer.next().await {
                 if let Ok(delivery) = delivery {
-                    //let properties = &delivery.properties;
-                    //if let Some(corr_id) = properties.correlation_id() {
-                        //if corr_id = uui {
-                            return Ok(delivery.data);
-                        //}
-                    //}
+                    return Ok(delivery.data);
                 }
             }
         }

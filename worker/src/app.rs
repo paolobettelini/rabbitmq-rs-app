@@ -39,7 +39,7 @@ impl MessageConsumer for AppLogic {
     fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
         let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
 
-        info!("Received Delivery: {:?}", delivery);
+        info!("Received Delivery");
         // info!("Consuming a message {:?}", result);
 
         let response = match result {
@@ -52,6 +52,7 @@ impl MessageConsumer for AppLogic {
         };
 
         // Return result
+        println!("Returning {:?}", response);
         let res = response.raw_bytes(&Settings::default());
 
         if let Ok(res) = res {
