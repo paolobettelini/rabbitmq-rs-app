@@ -86,9 +86,8 @@ pub struct RegisterResponseDataOk {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub enum RegisterResponseDataErr {
-    AlreadyExists,
-    //InvalidMail,
-    //InvalidUsername,
+    UsernameAlreadyExists,
+    MailAlreadyExists
 }
 
 #[derive(Protocol, Debug, PartialEq)]

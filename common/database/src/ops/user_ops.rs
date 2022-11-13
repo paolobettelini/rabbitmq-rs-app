@@ -14,14 +14,19 @@ pub fn get_user(connection: &mut MysqlConnection, name: &str) -> Option<User> {
     use crate::schema::user::{username, dsl::user};
     use diesel::{select};
 
-    /*
-    let result: User = user
+        /*
+    let result = user
+        .filter(username.eq(name))
+        .limit(1)
+        .load::<User>(&connection)
+        .unwrap();
+    let result: Vec<User> = user
         .filter(username.eq(name))
         //.limit(1)
         .load(connection)
         .unwrap_or(vec![])
-        .get(0)
-        .unwrap();*/
+        //.get(0)
+        //.unwrap();*/
 
     None
 }
@@ -33,8 +38,22 @@ pub fn user_exists(connection: &mut MysqlConnection, name: &str) -> bool {
     let result = select(exists(user.filter(username.eq(name))))
         .get_result(connection);
 
-    if let Ok(true) = result {
-        true
+    if let Ok(res) = result {
+        res
+    } else {
+        false
+    }
+}
+
+pub fn mail_exists(connection: &mut MysqlConnection, user_mail: &str) -> bool {
+    use crate::schema::user::dsl::*;
+    use diesel::{select, dsl::exists};
+    
+    let result = select(exists(user.filter(mail.eq(user_mail))))
+        .get_result(connection);
+
+    if let Ok(res) = result {
+        res
     } else {
         false
     }

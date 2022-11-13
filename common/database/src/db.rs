@@ -24,8 +24,12 @@ impl Database {
         users::user_exists(&mut self.connection, username)
     }
 
+    pub fn mail_exists(&mut self, user_mail: &str) -> bool {
+        users::mail_exists(&mut self.connection, user_mail)
+    }
+
     pub fn get_user(&mut self, username: &str) -> Option<User> {
-        None // TODO
+        users::get_user(&mut self.connection, username)
     }
 
     pub fn get_total_images(&mut self, username: &str) -> u32 {

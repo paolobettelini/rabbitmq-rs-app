@@ -110,11 +110,21 @@ impl AppLogic {
     }
 
     fn on_register_request(&mut self, data: &RegisterRequestData) -> RabbitMessage {
-        let exists = self.database.user_exists(&data.username);
+        let user_exists = self.database.user_exists(&data.username);
 
-        if exists {
+        if user_exists {
             let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
-                RegisterResponseDataErr::AlreadyExists,
+                RegisterResponseDataErr::UsernameAlreadyExists,
+            ));
+
+            return error;
+        }
+
+        let mail_exists = self.database.mail_exists(&data.mail);
+
+        if mail_exists {
+            let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
+                RegisterResponseDataErr::MailAlreadyExists,
             ));
 
             return error;
@@ -152,6 +162,7 @@ impl AppLogic {
                 token,
             }));
 
+        println!("Register Ok");
         response
     }
 

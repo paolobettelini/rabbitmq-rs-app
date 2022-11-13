@@ -87,7 +87,8 @@ impl App {
             context.insert(
                 "error",
                 &match err {
-                    RegisterResponseDataErr::AlreadyExists => "User already exists",
+                    RegisterResponseDataErr::UsernameAlreadyExists => "Username already exists",
+                    RegisterResponseDataErr::MailAlreadyExists => "Mail already used",
                 },
             );
         }
@@ -140,7 +141,7 @@ impl App {
             .publish_and_await_reply("queue", "consumer", &payload)
             .await;
 
-        let error = RegisterResponseData::Err(RegisterResponseDataErr::AlreadyExists);
+        let error = RegisterResponseData::Err(RegisterResponseDataErr::UsernameAlreadyExists);
 
         if let Ok(data) = answer {
             let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
