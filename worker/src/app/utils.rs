@@ -26,7 +26,7 @@ pub fn is_username_valid(mail: &str) -> bool {
 pub fn generate_random_token() -> Vec<u8> {
     use rand::{thread_rng, RngCore};
 
-    let mut data = vec![0; 256];
+    let mut data = vec![0; 32];
     rand::thread_rng().fill_bytes(&mut data);
 
     data

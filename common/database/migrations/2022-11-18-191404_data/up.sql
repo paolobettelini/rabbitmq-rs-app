@@ -3,7 +3,7 @@ CREATE TABLE user (
     mail VARCHAR(50) NOT NULL,
     username VARCHAR(25) NOT NULL,
     password BINARY(32) NOT NULL,
-    -- auth_token BINARY(32),
+    token BINARY(32) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

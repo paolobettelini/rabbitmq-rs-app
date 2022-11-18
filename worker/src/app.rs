@@ -147,15 +147,16 @@ impl AppLogic {
             return error;
         }*/
 
+        let token = utils::generate_random_token();
+
         let user = NewUser {
             mail: &data.mail,
             username: &data.username,
             password: &data.password,
+            token: &token
         };
 
         self.database.create_user(user);
-
-        let token = utils::generate_random_token();
 
         let response =
             RabbitMessage::RegisterResponse(RegisterResponseData::Ok(RegisterResponseDataOk {
@@ -167,7 +168,7 @@ impl AppLogic {
     }
 
     fn on_get_image(&mut self, data: &GetImageData) -> RabbitMessage {
-        if !self.check_authentication(&data.username, &data.token) {
+        if !self.check_authentication(&data.token) {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
             return error;
@@ -177,7 +178,7 @@ impl AppLogic {
     }
 
     fn on_shrink_and_upload(&mut self, data: &ShrinkAndUploadData) -> RabbitMessage {
-        if !self.check_authentication(&data.username, &data.token) {
+        if !self.check_authentication(&data.token) {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
             return error;
@@ -187,12 +188,13 @@ impl AppLogic {
     }
 
     fn on_get_total_images(&mut self, data: &GetTotalImagesData) -> RabbitMessage {
-        if !self.check_authentication(&data.username, &data.token) {
+        if !self.check_authentication(&data.token) {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
             return error;
         }
 
+        /*
         let amount = self.database.get_total_images(&data.username);
 
         if amount == 0 {
@@ -201,20 +203,22 @@ impl AppLogic {
             if !exists {
                 return RabbitMessage::ErrorResponse(ErrorResponseData::UnknownUsername);
             }
-        }
+        }*/
+        let amount = 0;
 
         let response = RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
 
         response
     }
 
-    fn check_authentication(&mut self, username: &str, token: &Vec<u8>) -> bool {
+    fn check_authentication(&mut self, token: &Vec<u8>) -> bool {
         true
 
         // TODO
     }
 
+    // This call assume that the user exists
     fn get_token_for(&mut self, username: &str) -> Vec<u8> {
-        vec![5, 5, 5, 5, 5]
+        self.database.get_token_for(username).unwrap()
     }
 }

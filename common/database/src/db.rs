@@ -32,6 +32,10 @@ impl Database {
         users::get_user(&mut self.connection, username)
     }
 
+    pub fn get_token_for(&mut self, username: &str) -> Option<Vec<u8>> {
+        users::get_token_for(&mut self.connection, username)
+    }
+
     pub fn get_total_images(&mut self, username: &str) -> u32 {
         images::get_total_images(&mut self.connection, username)
     }

@@ -10,6 +10,7 @@ use std::{
     path::Path,
     sync::Arc,
 };
+use futures::TryStreamExt;
 use tokio::sync::Mutex;
 use warp::{
     filters::cookie,
@@ -310,14 +311,21 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             .unwrap();
     });
 
-    // zupzup/warp-upload-download-example
     let upload_api = warp::path!("api" / "upload")
         .and(warp::post())
         .and(warp::multipart::form().max_length(2_500_000))
         .and(cookie::cookie::<String>("token"))
         .then(|form: FormData, token| async move {
             debug!("Receive file");
-            // form.try_collect() :sob:
+            
+            let parts: Vec<Part> = form
+                .try_collect()
+                .await
+                .unwrap(); // TODO
+
+            for part in parts {
+                break;
+            }
 
             Response::builder()
                 .status(StatusCode::OK)

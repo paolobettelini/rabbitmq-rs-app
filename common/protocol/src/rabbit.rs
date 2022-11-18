@@ -93,7 +93,6 @@ pub enum RegisterResponseDataErr {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct GetImageData {
-    pub username: String,
     pub token: Vec<u8>,
     pub index: u16,
 }
@@ -101,7 +100,6 @@ pub struct GetImageData {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct ShrinkAndUploadData {
-    pub username: String,
     pub token: Vec<u8>,
     pub image: Image,
 }
@@ -109,7 +107,6 @@ pub struct ShrinkAndUploadData {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct GetTotalImagesData {
-    pub username: String,
     pub token: Vec<u8>,
 }
 
