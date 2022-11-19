@@ -1,11 +1,12 @@
 use log::{debug, error, info};
 
-use database::{db::Database, models::*};
+use database::db::Database;
 use messaging::mb::*;
 use protocol::{
     rabbit::{RabbitMessage::*, *},
     Parcel, Settings,
 };
+use image::{ImageFormat, imageops::FilterType};
 
 mod utils;
 
@@ -149,21 +150,19 @@ impl AppLogic {
 
         let token = utils::generate_random_token();
 
-        let user = NewUser {
-            mail: &data.mail,
-            username: &data.username,
-            password: &data.password,
-            token: &token
-        };
-
-        self.database.create_user(user);
+        self.database.create_user(
+            &data.mail,
+            &data.username,
+            &data.password,
+            &token
+        );
 
         let response =
             RabbitMessage::RegisterResponse(RegisterResponseData::Ok(RegisterResponseDataOk {
                 token,
             }));
 
-        println!("Register Ok");
+        info!("Register Ok");
         response
     }
 
@@ -177,12 +176,28 @@ impl AppLogic {
         }
     }
 
+    // TODO, ensure parallelism
     fn on_shrink_and_upload(&mut self, data: &ShrinkAndUploadData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
-            let username = "pipo";
-            let image = utils::load_image(&data.image);
-    
-            RabbitMessage::ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
+            let result = image::load_from_memory(&data.image);
+            
+            if let Ok(image) = result {
+                let width = 200u32;
+                let height = 200u32;
+
+                // Heavy lifting ~ order of seconds
+                let image = image.resize(width, height, FilterType::Lanczos3);
+
+                // Convert to WebP
+                let bytes = utils::image_to_format(image, ImageFormat::Png);
+
+                // Save to database
+                self.database.insert_image(&username, &bytes);
+
+                RabbitMessage::ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
+            } else {
+                return RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
+            }
         } else {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 

@@ -69,6 +69,22 @@ pub fn get_token_for(connection: &mut MysqlConnection, name: &str) -> Option<Vec
     }
 }
 
+pub fn get_user_id(connection: &mut MysqlConnection, name: &str) -> Option<i32> {
+    use crate::schema::user::{username, id, dsl::user};
+    use diesel::select;
+    
+    let result: Result<i32, _> = user
+        .select(id)
+        .filter(username.eq(name))
+        .first(connection);
+
+    if let Ok(data) = result {
+        Some(data)
+    } else {
+        None
+    }
+}
+
 pub fn get_username(connection: &mut MysqlConnection, auth_token: &Vec<u8>) -> Option<String> {
     use crate::schema::user::{username, token, dsl::user};
     use diesel::select;

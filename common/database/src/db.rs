@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use diesel_migrations::*;
 
-use crate::models::{NewUser, User};
+use crate::models::{NewUser, User, NewImage, Image};
 use crate::ops::user_ops as users;
 use crate::ops::image_ops as images;
 
@@ -16,7 +16,9 @@ impl Database {
         Self { connection }
     }
 
-    pub fn create_user(&mut self, new_user: NewUser) {
+    pub fn create_user(&mut self, mail: &str, username: &str, password: &Vec<u8>, token: &Vec<u8>) {
+        let new_user = NewUser { mail, username, password, token};
+
         users::create_user(&mut self.connection, new_user);
     }
 
@@ -38,6 +40,21 @@ impl Database {
 
     pub fn get_token_for(&mut self, username: &str) -> Option<Vec<u8>> {
         users::get_token_for(&mut self.connection, username)
+    }
+
+    pub fn get_user_id(&mut self, username: &str) -> Option<i32> {
+        users::get_user_id(&mut self.connection, username)
+    }
+
+    pub fn insert_image(&mut self, username: &str, data: &Vec<u8>) {
+        if let Some(id) = self.get_user_id(&username) {
+            let new_image = NewImage {
+                user_id: id,
+                data: data
+            };
+
+            images::insert_image(&mut self.connection, &username, new_image);
+        }
     }
 
     pub fn get_total_images(&mut self, username: &str) -> u32 {
