@@ -168,53 +168,52 @@ impl AppLogic {
     }
 
     fn on_get_image(&mut self, data: &GetImageData) -> RabbitMessage {
-        if !self.check_authentication(&data.token) {
+        if let Some(username) = self.get_username(&data.token) {
+            todo!()
+        } else {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
-            return error;
+            error
         }
-
-        todo!()
     }
 
     fn on_shrink_and_upload(&mut self, data: &ShrinkAndUploadData) -> RabbitMessage {
-        if !self.check_authentication(&data.token) {
+        if let Some(username) = self.get_username(&data.token) {
+            let username = "pipo";
+            let image = utils::load_image(&data.image);
+    
+            RabbitMessage::ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
+        } else {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
-            return error;
+            error
         }
-
-        todo!()
     }
 
     fn on_get_total_images(&mut self, data: &GetTotalImagesData) -> RabbitMessage {
-        if !self.check_authentication(&data.token) {
+        if let Some(username) = self.get_username(&data.token) {
+            let amount = self.database.get_total_images(&username);
+
+            if amount == 0 {
+                let exists = self.database.user_exists(&username);
+
+                if !exists {
+                    return RabbitMessage::ErrorResponse(ErrorResponseData::UnknownUsername);
+                }
+            }
+
+            let response = RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
+
+            response
+        } else {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
 
-            return error;
+            error
         }
-
-        /*
-        let amount = self.database.get_total_images(&data.username);
-
-        if amount == 0 {
-            let exists = self.database.user_exists(&data.username);
-
-            if !exists {
-                return RabbitMessage::ErrorResponse(ErrorResponseData::UnknownUsername);
-            }
-        }*/
-        let amount = 0;
-
-        let response = RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
-
-        response
     }
 
-    fn check_authentication(&mut self, token: &Vec<u8>) -> bool {
-        true
-
-        // TODO
+    fn get_username(&mut self, token: &Vec<u8>) -> Option<String> {
+        self.database.get_username(token)
     }
 
     // This call assume that the user exists

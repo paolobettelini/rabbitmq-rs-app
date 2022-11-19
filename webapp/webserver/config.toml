@@ -22,5 +22,5 @@ vhost = "vhost"
 #
 # See https://doc.servo.org/env_logger/index.html
 [log]
-log = "debug"
+log = "info"
 style = "auto"

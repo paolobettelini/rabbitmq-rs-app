@@ -155,4 +155,28 @@ impl App {
             error
         }
     }
+
+    pub async fn send_upload_request(&self, data: ShrinkAndUploadData) -> ShrinkAndUploadResponseData {
+        let message = RabbitMessage::ShrinkAndUpload(data);
+        let payload = message.raw_bytes(&Settings::default()).unwrap();
+
+        let answer = self
+            .rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
+
+        let error = ShrinkAndUploadResponseData::InvalidImage;
+
+        if let Ok(data) = answer {
+            let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            if let ShrinkAndUploadResponse(data) = res {
+                data
+            } else {
+                error
+            }
+        } else {
+            error
+        }
+    }
 }

@@ -1,6 +1,8 @@
 use clap::Parser;
+use bytes::BufMut;
 use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
+use serde_json::json;
 use serde::Deserialize;
 use std::path::PathBuf;
 use std::{
@@ -317,20 +319,91 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .and(cookie::cookie::<String>("token"))
         .then(|form: FormData, token| async move {
             debug!("Receive file");
+
+            let token = {
+                let result = utils::from_base64(token);
+
+                if let Ok(value) = result {
+                    value
+                } else {
+                    return Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body("".to_string())
+                        .unwrap();
+                }
+            };
+
+            macro_rules! json_response {
+                ($msg:tt) => {
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .header("Content-Type", "application/json")
+                        .body(json!({
+                            "response": $msg
+                        }).to_string())
+                        .unwrap()
+                };
+            }
             
-            let parts: Vec<Part> = form
-                .try_collect()
-                .await
-                .unwrap(); // TODO
+            let parts = {
+                let parts: Result<Vec<Part>, _> = form
+                    .try_collect()
+                    .await;
+
+                if let Ok(data) = parts {
+                    data
+                } else {
+                    return json_response!("Invalid Request");
+                }
+            };
 
             for part in parts {
+                if part.name() != "file" {
+                    return json_response!("Invalid Request");
+                }
+
+                if let Some(content_type) = part.content_type() {
+                    if !content_type.starts_with("image") {
+                        return json_response!("Invalid Image");
+                    }
+                } else {
+                    return json_response!("Invalid Image");
+                }
+                
+                let image = {
+                    let value = part
+                    .stream()
+                    .try_fold(Vec::new(), |mut vec, data| {
+                        vec.put(data);
+                        async move { Ok(vec) }
+                    })
+                    .await;
+
+                    if let Ok(data) = value {
+                        data
+                    } else {
+                        return json_response!("An error has occured");
+                    }
+                };
+
+                let app = APP.get().unwrap().lock().await;
+                
+                let upload_req = ShrinkAndUploadData { token, image }; 
+
+                let response = app.send_upload_request(upload_req).await;
+                
+                let status = match response {
+                    ShrinkAndUploadResponseData::Ok => "Ok",
+                    ShrinkAndUploadResponseData::InvalidImage => "Invalid Image",
+                };
+
+                return json_response!(status);
+
                 break;
             }
 
-            Response::builder()
-                .status(StatusCode::OK)
-                .body("".to_owned())
-                .unwrap()
+
+            json_response!("Invalid Request")
         });
 
     let get_image_api = warp::path!("api" / "image" / u16).then(|index| async move {

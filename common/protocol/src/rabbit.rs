@@ -29,6 +29,7 @@ pub enum RabbitMessage {
     RegisterResponse(RegisterResponseData),
     GetImage(GetImageData),
     ShrinkAndUpload(ShrinkAndUploadData),
+    ShrinkAndUploadResponse(ShrinkAndUploadResponseData),
     GetTotalImages(GetTotalImagesData),
     GetTotalImagesResponse(GetTotalImagesResponseData),
     // get total images response
@@ -121,4 +122,11 @@ pub struct GetTotalImagesResponseData {
 pub enum ErrorResponseData {
     AuthenticationRequired,
     UnknownUsername,
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub enum ShrinkAndUploadResponseData {
+    Ok,
+    InvalidImage
 }

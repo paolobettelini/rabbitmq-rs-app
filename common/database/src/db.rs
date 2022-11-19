@@ -32,6 +32,10 @@ impl Database {
         users::get_user(&mut self.connection, username)
     }
 
+    pub fn get_username(&mut self, token: &Vec<u8>) -> Option<String> {
+        users::get_username(&mut self.connection, token)
+    }
+
     pub fn get_token_for(&mut self, username: &str) -> Option<Vec<u8>> {
         users::get_token_for(&mut self.connection, username)
     }

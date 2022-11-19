@@ -55,11 +55,27 @@ pub fn mail_exists(connection: &mut MysqlConnection, user_mail: &str) -> bool {
 
 pub fn get_token_for(connection: &mut MysqlConnection, name: &str) -> Option<Vec<u8>> {
     use crate::schema::user::{username, token, dsl::user};
-    use diesel::{select};
+    use diesel::select;
     
     let result: Result<Vec<u8>, _> = user
         .select(token)
         .filter(username.eq(name))
+        .first(connection);
+
+    if let Ok(data) = result {
+        Some(data)
+    } else {
+        None
+    }
+}
+
+pub fn get_username(connection: &mut MysqlConnection, auth_token: &Vec<u8>) -> Option<String> {
+    use crate::schema::user::{username, token, dsl::user};
+    use diesel::select;
+
+    let result: Result<String, _> = user
+        .select(username)
+        .filter(token.eq(auth_token))
         .first(connection);
 
     if let Ok(data) = result {
