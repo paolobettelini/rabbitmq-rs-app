@@ -57,6 +57,10 @@ impl Database {
         }
     }
 
+    pub fn get_image(&mut self, username: &str, index: i32) -> Option<Vec<u8>> {
+        images::get_image(&mut self.connection, username, index)
+    }
+
     pub fn get_total_images(&mut self, username: &str) -> u32 {
         images::get_total_images(&mut self.connection, username)
     }

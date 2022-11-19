@@ -1,14 +1,18 @@
 use log::{debug, error, info};
 
 use database::db::Database;
+use image::{imageops::FilterType, ImageFormat};
 use messaging::mb::*;
 use protocol::{
     rabbit::{RabbitMessage::*, *},
     Parcel, Settings,
 };
-use image::{ImageFormat, imageops::FilterType};
 
 mod utils;
+
+const WIDTH: u32 = 200;
+const HEIGHT: u32 = 200;
+const FORMAT: ImageFormat = ImageFormat::Png;
 
 pub struct App {
     amqp: Rabbit<AppLogic>,
@@ -150,12 +154,8 @@ impl AppLogic {
 
         let token = utils::generate_random_token();
 
-        self.database.create_user(
-            &data.mail,
-            &data.username,
-            &data.password,
-            &token
-        );
+        self.database
+            .create_user(&data.mail, &data.username, &data.password, &token);
 
         let response =
             RabbitMessage::RegisterResponse(RegisterResponseData::Ok(RegisterResponseDataOk {
@@ -168,11 +168,15 @@ impl AppLogic {
 
     fn on_get_image(&mut self, data: &GetImageData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
-            todo!()
+            if let Some(data) = self.database.get_image(&username, data.index as i32) {
+                RabbitMessage::GetImageResponse(GetImageResponseData::Ok(GetImageResponseDataOk {
+                    data,
+                }))
+            } else {
+                RabbitMessage::GetImageResponse(GetImageResponseData::InvalidIndex)
+            }
         } else {
-            let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
-
-            error
+            RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired)
         }
     }
 
@@ -180,23 +184,22 @@ impl AppLogic {
     fn on_shrink_and_upload(&mut self, data: &ShrinkAndUploadData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
             let result = image::load_from_memory(&data.image);
-            
-            if let Ok(image) = result {
-                let width = 200u32;
-                let height = 200u32;
 
+            if let Ok(image) = result {
                 // Heavy lifting ~ order of seconds
-                let image = image.resize(width, height, FilterType::Lanczos3);
+                let image = image.resize(WIDTH, HEIGHT, FilterType::Lanczos3);
 
                 // Convert to WebP
-                let bytes = utils::image_to_format(image, ImageFormat::Png);
+                let bytes = utils::image_to_format(image, FORMAT);
 
                 // Save to database
                 self.database.insert_image(&username, &bytes);
 
                 RabbitMessage::ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
             } else {
-                return RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
+                return RabbitMessage::ShrinkAndUploadResponse(
+                    ShrinkAndUploadResponseData::InvalidImage,
+                );
             }
         } else {
             let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
@@ -217,7 +220,8 @@ impl AppLogic {
                 }
             }
 
-            let response = RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
+            let response =
+                RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
 
             response
         } else {

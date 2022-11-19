@@ -28,11 +28,11 @@ pub enum RabbitMessage {
     RegisterRequest(RegisterRequestData),
     RegisterResponse(RegisterResponseData),
     GetImage(GetImageData),
+    GetImageResponse(GetImageResponseData),
     ShrinkAndUpload(ShrinkAndUploadData),
     ShrinkAndUploadResponse(ShrinkAndUploadResponseData),
     GetTotalImages(GetTotalImagesData),
     GetTotalImagesResponse(GetTotalImagesResponseData),
-    // get total images response
     ErrorResponse(ErrorResponseData),
 }
 
@@ -129,4 +129,17 @@ pub enum ErrorResponseData {
 pub enum ShrinkAndUploadResponseData {
     Ok,
     InvalidImage
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub enum GetImageResponseData {
+    Ok(GetImageResponseDataOk),
+    InvalidIndex
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub struct GetImageResponseDataOk {
+    pub data: Vec<u8>
 }

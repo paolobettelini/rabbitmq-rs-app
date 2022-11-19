@@ -1,8 +1,8 @@
 use image::{DynamicImage, ImageFormat};
 
 pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
-    use std::io::{Cursor, Read, SeekFrom, Seek, Write};
-    
+    use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+
     let color = image.color();
     let width = image.width();
     let height = image.height();
@@ -16,9 +16,9 @@ pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
         width,
         height,
         color,
-        format
+        format,
     );
-    
+
     // Read result
     cursor.seek(SeekFrom::Start(0)).unwrap();
     let mut buffer = Vec::new();
@@ -29,7 +29,7 @@ pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
 
 pub fn hash(data: &Vec<u8>) -> Vec<u8> {
     use sha2::Digest;
-    
+
     let res = sha2::Sha256::digest(data);
 
     // let x: [u8; 32] = res.as_slice().try_into().unwrap();
