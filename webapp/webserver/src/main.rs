@@ -11,9 +11,8 @@ use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr},
     path::Path,
-    sync::Arc,
+    sync::{Arc, RwLock, RwLockReadGuard},
 };
-use tokio::sync::Mutex;
 use warp::{
     filters::cookie,
     http::{Response, StatusCode},
@@ -33,7 +32,7 @@ use protocol::rabbit::*;
 #[macro_use]
 extern crate lazy_static;
 
-static APP: OnceCell<Arc<Mutex<App>>> = OnceCell::new();
+static APP: OnceCell<Arc<App>> = OnceCell::new();
 
 lazy_static! {
     static ref CONFIG: Box<WebserverConfig> = {
@@ -68,7 +67,7 @@ async fn main() {
         env_logger::init();
     };
 
-    let app: Arc<Mutex<App>> = {
+    let app: Arc<App> = {
         let mb_connection_url = if let Some(mb) = &CONFIG.rabbit {
             mb.get_connection_string()
         } else {
@@ -90,8 +89,12 @@ async fn main() {
     start_service(&CONFIG.http.www).await;
 }
 
-async fn create_app(www: &str, amqp: &str) -> Arc<Mutex<App>> {
-    Arc::new(Mutex::new(App::new(www, amqp).await))
+async fn create_app(www: &str, amqp: &str) -> Arc<App> {
+    Arc::new(App::new(www, amqp).await)
+}
+
+fn get_app() -> Arc<App> {
+    APP.get().unwrap().clone()
 }
 
 async fn start_service(www: &'static str) {
@@ -116,7 +119,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let index_page = warp::path::end()
         .and(cookie::optional::<String>("token"))
         .then(|token| async {
-            let content = APP.get().unwrap().lock().await.render_index(token);
+            let content = get_app().render_index(token);
 
             reply::html(content)
         });
@@ -124,7 +127,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let login_page = warp::path("login")
         .and(cookie::optional::<String>("token"))
         .then(|token: Option<String>| async move {
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             if token.is_some() {
                 return Response::builder()
@@ -146,7 +149,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let register_page = warp::path("register")
         .and(cookie::optional::<String>("token"))
         .then(|token: Option<String>| async move {
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             if token.is_some() {
                 return Response::builder()
@@ -168,7 +171,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let logout_page = warp::path("logout")
         .and(cookie::cookie::<String>("token"))
         .then(|token| async move {
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let content = app.render_logout();
 
@@ -182,7 +185,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let gallery_page = warp::path("gallery")
         .and(cookie::cookie::<String>("token"))
         .then(|token| async move {
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let content = app.render_gallery();
 
@@ -196,7 +199,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
     let upload_page = warp::path("upload")
         .and(cookie::cookie::<String>("token"))
         .then(|token| async move {
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let content = app.render_upload();
 
@@ -236,7 +239,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             let username = username.to_string();
             let login_req = LoginRequestData { username, password };
 
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let response = app.send_login_request(login_req).await;
 
@@ -287,7 +290,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 password: password,
             };
 
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let response = app.send_register_request(register_req).await;
 
@@ -396,7 +399,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                     }
                 };
 
-                let app = APP.get().unwrap().lock().await;
+                let app = get_app();
 
                 let upload_req = ShrinkAndUploadData { token, image };
 
@@ -431,7 +434,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 }
             };
 
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let get_image_req = GetImageData { token, index };
 
@@ -460,7 +463,7 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 }
             };
             
-            let app = APP.get().unwrap().lock().await;
+            let app = get_app();
 
             let get_request = GetTotalImagesData { token };
 
