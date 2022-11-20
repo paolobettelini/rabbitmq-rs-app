@@ -179,6 +179,20 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 .unwrap()
         });
 
+    let gallery_page = warp::path("gallery")
+        .and(cookie::cookie::<String>("token"))
+        .then(|token| async move {
+            let app = APP.get().unwrap().lock().await;
+
+            let content = app.render_gallery();
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(content)
+                .unwrap()
+        });
+
     let upload_page = warp::path("upload")
         .and(cookie::cookie::<String>("token"))
         .then(|token| async move {
@@ -423,12 +437,15 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
     let upload_block = warp::path::path("upload.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
+    let gallery_block = warp::path::path("gallery.html")
+        .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
 
     let templates = index_page
         .or(login_page)
         .or(register_page)
         .or(logout_page)
-        .or(upload_page);
+        .or(upload_page)
+        .or(gallery_page);
 
     let methods = login_api
         .or(register_api)
@@ -440,7 +457,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .or(login_block)
         .or(register_block)
         .or(logout_block)
-        .or(upload_block);
+        .or(upload_block)
+        .or(gallery_block);
 
     let routes = methods.or(blocks).or(templates).or(static_files);
 

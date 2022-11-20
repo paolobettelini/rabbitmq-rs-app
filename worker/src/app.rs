@@ -45,7 +45,6 @@ impl MessageConsumer for AppLogic {
         let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
 
         info!("Received Delivery");
-        // info!("Consuming a message {:?}", result);
 
         let response = match result {
             LoginRequest(ref data) => self.on_login_request(&data),
@@ -75,10 +74,8 @@ impl AppLogic {
         info!("Running embedded migrations");
         database.run_embedded_migrations();
 
-        //let amqp = Rabbit::new(mb_connection_url, consume).await;
-
         AppLogic {
-            database, //amqp: mb_connection,
+            database,
         }
     }
 
@@ -134,23 +131,6 @@ impl AppLogic {
 
             return error;
         }
-
-        /*
-        if !utils::is_mail_valid(&data.mail) {
-            let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
-                RegisterResponseDataErr::InvalidMail,
-            ));
-
-            return error;
-        }
-
-        if !utils::is_username_valid(&data.username) {
-            let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
-                RegisterResponseDataErr::InvalidUsername,
-            ));
-
-            return error;
-        }*/
 
         let token = utils::generate_random_token();
 

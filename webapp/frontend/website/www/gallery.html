@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <link rel="stylesheet" href="/style/style.css">
     <title>Progetto</title>
 </head>
@@ -11,15 +12,13 @@
     <nav>
         <ul>
             <li class="home"><a href="/">Home</a></li>
-            {% if token %}
-                <li><a href="/logout">Logout</a></li>
-                <li><a href="/upload">Upload</a></li>
-                <li><a href="/gallery">Gallery</a></li>
-            {% else %}
-                <li><a href="/register">Register</a></li>
-                <li><a href="/login">Login</a></li>
-            {% endif %}
+            <li><a href="/logout">Logout</a></li>
+            <li><a href="/upload">Upload</a></li>
+            <li><a href="#" class="active">Gallery</a></li>
         </ul>
     </nav>
+
+
+    <script src="/upload.gallery.js"></script>
 </body>
 </html>

@@ -37,6 +37,7 @@ impl App {
         template!("register", "register.html");
         template!("logout", "logout.html");
         template!("upload", "upload.html");
+        template!("gallery", "gallery.html");
 
         tera
     }
@@ -100,6 +101,12 @@ impl App {
         let context = Context::new();
 
         self.render_template("logout", context).unwrap()
+    }
+
+    pub fn render_gallery(&self) -> String {
+        let context = Context::new();
+
+        self.render_template("gallery", context).unwrap()
     }
 
     pub fn render_upload(&self) -> String {

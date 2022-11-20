@@ -6,7 +6,8 @@ module.exports = {
   entry: {
     login: "./www/login.js",
     register: "./www/register.js",
-    upload: "./www/upload.js"
+    upload: "./www/upload.js",
+    gallery: "./www/gallery.js"
   },
   output: {
     path: path.resolve(__dirname, "dist"),
