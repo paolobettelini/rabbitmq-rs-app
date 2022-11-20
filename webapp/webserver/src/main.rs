@@ -1,9 +1,10 @@
-use clap::Parser;
 use bytes::BufMut;
+use clap::Parser;
+use futures::TryStreamExt;
 use log::{debug, error, info, warn};
 use once_cell::sync::OnceCell;
-use serde_json::json;
 use serde::Deserialize;
+use serde_json::json;
 use std::path::PathBuf;
 use std::{
     collections::HashMap,
@@ -12,7 +13,6 @@ use std::{
     path::Path,
     sync::Arc,
 };
-use futures::TryStreamExt;
 use tokio::sync::Mutex;
 use warp::{
     filters::cookie,
@@ -327,6 +327,16 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
             .unwrap();
     });
 
+    macro_rules! json_response {
+        ($msg:tt) => {
+            Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "application/json")
+                .body(json!({ "response": $msg }).to_string())
+                .unwrap()
+        };
+    }
+
     let upload_api = warp::path!("api" / "upload")
         .and(warp::post())
         .and(warp::multipart::form().max_length(2_500_000))
@@ -347,22 +357,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 }
             };
 
-            macro_rules! json_response {
-                ($msg:tt) => {
-                    Response::builder()
-                        .status(StatusCode::OK)
-                        .header("Content-Type", "application/json")
-                        .body(json!({
-                            "response": $msg
-                        }).to_string())
-                        .unwrap()
-                };
-            }
-            
             let parts = {
-                let parts: Result<Vec<Part>, _> = form
-                    .try_collect()
-                    .await;
+                let parts: Result<Vec<Part>, _> = form.try_collect().await;
 
                 if let Ok(data) = parts {
                     data
@@ -383,15 +379,15 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 } else {
                     return json_response!("Invalid Image");
                 }
-                
+
                 let image = {
                     let value = part
-                    .stream()
-                    .try_fold(Vec::new(), |mut vec, data| {
-                        vec.put(data);
-                        async move { Ok(vec) }
-                    })
-                    .await;
+                        .stream()
+                        .try_fold(Vec::new(), |mut vec, data| {
+                            vec.put(data);
+                            async move { Ok(vec) }
+                        })
+                        .await;
 
                     if let Ok(data) = value {
                         data
@@ -401,11 +397,11 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 };
 
                 let app = APP.get().unwrap().lock().await;
-                
-                let upload_req = ShrinkAndUploadData { token, image }; 
+
+                let upload_req = ShrinkAndUploadData { token, image };
 
                 let response = app.send_upload_request(upload_req).await;
-                
+
                 let status = match response {
                     ShrinkAndUploadResponseData::Ok => "Ok",
                     ShrinkAndUploadResponseData::InvalidImage => "Invalid Image",
@@ -416,16 +412,43 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
                 break;
             }
 
-
             json_response!("Invalid Request")
         });
 
-    let get_image_api = warp::path!("api" / "image" / u16).then(|index| async move {
-        Response::builder()
-            .status(StatusCode::OK)
-            .body("".to_owned())
-            .unwrap()
-    });
+    let get_image_api = warp::path!("api" / "image" / u16)
+        .and(cookie::cookie::<String>("token"))
+        .then(|token, index| async move {
+            Response::builder()
+                .status(StatusCode::OK)
+                .body("TODO".to_owned())
+                .unwrap()
+        });
+
+    let get_total_images_api = warp::path!("api" / "total-images")
+        .and(cookie::cookie::<String>("token"))
+        .then(|token| async move {
+            let token = {
+                let result = utils::from_base64(token);
+
+                if let Ok(value) = result {
+                    value
+                } else {
+                    return Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body("".to_string())
+                        .unwrap();
+                }
+            };
+            
+            let app = APP.get().unwrap().lock().await;
+
+            let get_request = GetTotalImagesData { token };
+
+            let response = app.send_total_images_request(get_request).await;
+
+            let amount = response.amount;
+            return json_response!(amount);
+        });
 
     let index_block = warp::path::path("index.html")
         .map(|| reply::with_status("404 NOT_FOUND", StatusCode::NOT_FOUND));
@@ -451,7 +474,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
         .or(register_api)
         .or(logout_api)
         .or(upload_api)
-        .or(get_image_api);
+        .or(get_image_api)
+        .or(get_total_images_api);
 
     let blocks = index_block
         .or(login_block)

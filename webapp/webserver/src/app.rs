@@ -1,5 +1,8 @@
 use messaging::mb::*;
-use protocol::{rabbit::{*, RabbitMessage::*}, Parcel, Settings};
+use protocol::{
+    rabbit::{RabbitMessage::*, *},
+    Parcel, Settings,
+};
 use tera::{Context, Tera};
 
 #[derive(Debug)]
@@ -163,7 +166,10 @@ impl App {
         }
     }
 
-    pub async fn send_upload_request(&self, data: ShrinkAndUploadData) -> ShrinkAndUploadResponseData {
+    pub async fn send_upload_request(
+        &self,
+        data: ShrinkAndUploadData,
+    ) -> ShrinkAndUploadResponseData {
         let message = RabbitMessage::ShrinkAndUpload(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
@@ -172,18 +178,40 @@ impl App {
             .publish_and_await_reply("queue", "consumer", &payload)
             .await;
 
-        let error = ShrinkAndUploadResponseData::InvalidImage;
-
         if let Ok(data) = answer {
             let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
 
             if let ShrinkAndUploadResponse(data) = res {
                 data
             } else {
-                error
+                ShrinkAndUploadResponseData::InvalidImage
             }
         } else {
-            error
+            ShrinkAndUploadResponseData::InvalidImage
+        }
+    }
+
+    pub async fn send_total_images_request(&self, data: GetTotalImagesData) -> GetTotalImagesResponseData {
+        let message = RabbitMessage::GetTotalImages(data);
+        let payload = message.raw_bytes(&Settings::default()).unwrap();
+
+        let answer = self
+            .rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
+
+        if let Ok(data) = answer {
+            let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            if let GetTotalImagesResponse(data) = res {
+                data
+            } else {
+                GetTotalImagesResponseData { amount: 0 }
+            }
+        } else {
+            GetTotalImagesResponseData { amount: 0 }
         }
     }
 }
+
+// TODO: main non dovrebbe usare le cose di protocol::*;

@@ -23,5 +23,10 @@ async function postData(url = '', data = {}) {
     return await response.json();
 }
 
-//postData('/api/total-images')
-//    .then(resp => console.log(resp));
+postData('/api/total-images')
+    .then(json => {
+        let container = document.getElementById('img-num');
+        let total = json['response'];
+        let text = document.createTextNode(total);
+        container.appendChild(text);
+    });
