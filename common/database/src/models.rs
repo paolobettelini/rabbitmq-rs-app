@@ -38,6 +38,7 @@ pub struct Image {
 #[diesel(belongs_to(User))]
 #[diesel(table_name = image)]
 pub struct NewImage<'a> {
+    pub id: i32,
     pub user_id: i32,
     pub data: &'a Vec<u8>,
 }

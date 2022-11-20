@@ -1,0 +1,20 @@
+CREATE TABLE user (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    mail VARCHAR(50) NOT NULL,
+    username VARCHAR(25) NOT NULL,
+    password BINARY(32) NOT NULL,
+    token BINARY(32) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE image (
+    id INT NOT NULL,
+    user_id INT NOT NULL,
+    PRIMARY KEY (id, user_id),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data BLOB NOT NULL,
+    FOREIGN KEY (user_id)
+        REFERENCES user(id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE
+);

@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    image (id) {
+    image (id, user_id) {
         id -> Integer,
         user_id -> Integer,
         uploaded_at -> Timestamp,

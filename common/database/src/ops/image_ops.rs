@@ -19,7 +19,7 @@ pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
         .filter(username.eq(name))
         .select(id_field)
         .first(connection)
-        .unwrap_or(0); // TODO return option as below
+        .unwrap_or(0);
 
     let result = image
         .filter(user_id.eq(id_to_filter))
@@ -30,27 +30,27 @@ pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
     result.try_into().unwrap_or(0u32)
 }
 
-pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Option<Vec<u8>> {
-    use crate::schema::image::{id, user_id, data, dsl::image};
-    use crate::schema::user::{id as id_field, username, dsl::user};
+pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Option<Image> {
+    use crate::schema::image::{id as image_id, user_id as user_id_image, data, dsl::image};
+    use crate::schema::user::{id as user_id_user, username, dsl::user};
     use diesel::select;
 
     let id_to_filter: i32 = {
         let result = user
             .filter(username.eq(name))
-            .select(id_field)
+            .select(user_id_user)
             .first(connection);
 
         if let Ok(value) = result {
             value
         } else {
+            println!("NONE");
             return None;
         }
     };
 
-    let result: Result<Vec<u8>, _> = image
-        .filter(user_id.eq(id_to_filter))
-        .select(data)
+    let result: Result<Image, _> = image
+        .filter(user_id_image.eq(id_to_filter).and(image_id.eq(index)))
         .first(connection);
 
     if let Ok(bytes) = result {

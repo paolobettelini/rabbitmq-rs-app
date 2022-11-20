@@ -47,17 +47,17 @@ impl Database {
     }
 
     pub fn insert_image(&mut self, username: &str, data: &Vec<u8>) {
-        if let Some(id) = self.get_user_id(&username) {
-            let new_image = NewImage {
-                user_id: id,
-                data: data
-            };
+        if let Some(user_id) = self.get_user_id(&username) {
+            let total_images = self.get_total_images(username) as i32;
+            let id = total_images + 1;
+            
+            let new_image = NewImage { id, user_id, data };
 
             images::insert_image(&mut self.connection, &username, new_image);
         }
     }
 
-    pub fn get_image(&mut self, username: &str, index: i32) -> Option<Vec<u8>> {
+    pub fn get_image(&mut self, username: &str, index: i32) -> Option<Image> {
         images::get_image(&mut self.connection, username, index)
     }
 

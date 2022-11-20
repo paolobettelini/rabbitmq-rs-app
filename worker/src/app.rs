@@ -56,7 +56,7 @@ impl MessageConsumer for AppLogic {
         };
 
         // Return result
-        println!("Returning {:?}", response);
+        // println!("Returning {:?}", response);
         let res = response.raw_bytes(&Settings::default());
 
         if let Ok(res) = res {
@@ -148,9 +148,9 @@ impl AppLogic {
 
     fn on_get_image(&mut self, data: &GetImageData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
-            if let Some(data) = self.database.get_image(&username, data.index as i32) {
+            if let Some(image) = self.database.get_image(&username, data.index as i32) {
                 RabbitMessage::GetImageResponse(GetImageResponseData::Ok(GetImageResponseDataOk {
-                    data,
+                    data: image.data,
                 }))
             } else {
                 RabbitMessage::GetImageResponse(GetImageResponseData::InvalidIndex)
