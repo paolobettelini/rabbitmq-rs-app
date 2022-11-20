@@ -417,11 +417,31 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
 
     let get_image_api = warp::path!("api" / "image" / u16)
         .and(cookie::cookie::<String>("token"))
-        .then(|token, index| async move {
-            Response::builder()
+        .then(|index, token| async move {
+            let token = {
+                let result = utils::from_base64(token);
+
+                if let Ok(value) = result {
+                    value
+                } else {
+                    return Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(vec![])
+                        .unwrap();
+                }
+            };
+
+            let app = APP.get().unwrap().lock().await;
+
+            let get_image_req = GetImageData { token, index };
+
+            let response = app.send_get_image_request(get_image_req).await;
+            
+            return Response::builder()
                 .status(StatusCode::OK)
-                .body("TODO".to_owned())
-                .unwrap()
+                .header("Content-Type", "image/*")
+                .body(response)
+                .unwrap();
         });
 
     let get_total_images_api = warp::path!("api" / "total-images")
@@ -488,3 +508,8 @@ fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Re
 
     routes
 }
+
+// sistemare le macro
+// macro per check dei token etc.
+// macro per block, page etc.
+// non usare protocol. Input e output non usano quegli struct

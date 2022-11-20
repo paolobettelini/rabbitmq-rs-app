@@ -23,10 +23,31 @@ async function postData(url = '', data = {}) {
     return await response.json();
 }
 
+var loaded = 0;
+var total = null;
+
+var imageContainer = document.getElementById('images');
+
 postData('/api/total-images')
     .then(json => {
         let container = document.getElementById('img-num');
-        let total = json['response'];
-        let text = document.createTextNode(total);
-        container.appendChild(text);
+        total = json['response'];
+        container.innerHTML = total;
+
+        loadImages();
     });
+
+function loadImages() {
+    for (let i = 1; i <= total; i++) {
+        loadImage(i);
+    }
+}
+
+function loadImage(index) {
+    console.log(`Loading image [${index}]`);
+    
+    let img = document.createElement('img');
+    img.src = `/api/image/${index}`;
+    
+    imageContainer.appendChild(img);
+}

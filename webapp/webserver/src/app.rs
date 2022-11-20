@@ -212,6 +212,28 @@ impl App {
             GetTotalImagesResponseData { amount: 0 }
         }
     }
+
+    pub async fn send_get_image_request(&self, data: GetImageData) -> Vec<u8> {
+        let message = RabbitMessage::GetImage(data);
+        let payload = message.raw_bytes(&Settings::default()).unwrap();
+
+        let answer = self
+            .rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
+
+        if let Ok(data) = answer {
+            let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
+
+            if let GetImageResponse(GetImageResponseData::Ok(image)) = res {
+                image.data
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        }
+    }
 }
 
-// TODO: main non dovrebbe usare le cose di protocol::*;
+// global consumer name and queue name
