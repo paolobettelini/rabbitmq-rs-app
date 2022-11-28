@@ -8,7 +8,8 @@ lapin = "2.1.1"
 amq-protocol-types = "7.0.1"
 tokio = { version = "1", features = ["full"]}
 tokio-amqp = "2.0.0"
-deadpool = "0.9.5"
+deadpool = "0.9.5" # lapin connection pool
 deadpool-lapin = "0.10.0"
 futures = { version = "0.3.17", default-features = true }
 uuid = { version = "1.1.2", features = ["v4", "fast-rng", "macro-diagnostics"] }
+threadpool = "1.8.1" # thread pool

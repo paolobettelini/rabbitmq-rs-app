@@ -27,6 +27,7 @@ var loaded = 0;
 var total = null;
 
 var imageContainer = document.getElementById('images');
+var loadMoreButton = document.getElementById('load-more-button');
 
 postData('/api/total-images')
     .then(json => {
@@ -34,14 +35,18 @@ postData('/api/total-images')
         total = json['response'];
         container.innerHTML = total;
 
-        loadImages();
+        load(5);
     });
 
-function loadImages() {
-    for (let i = 1; i <= total; i++) {
+function load(amount) {
+    amount = Math.min(loaded + amount, total) - loaded;
+    for (let i = loaded + 1; i <= loaded + amount; i++) {
         loadImage(i);
     }
+    loaded += amount;
 }
+
+loadMoreButton.onclick = () => load(5);
 
 function loadImage(index) {
     console.log(`Loading image [${index}]`);

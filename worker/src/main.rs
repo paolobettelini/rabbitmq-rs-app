@@ -68,6 +68,6 @@ async fn main() {
     };
 
     // Create App
-    let mut app = App::new(db_connection_url, mb_connection_url).await;
+    let app = App::new(db_connection_url, mb_connection_url).await;
     app.start().await;
 }

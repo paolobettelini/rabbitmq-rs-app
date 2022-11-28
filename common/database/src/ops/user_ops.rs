@@ -12,7 +12,7 @@ pub fn create_user(connection: &mut MysqlConnection, new_user: NewUser) {
 
 pub fn get_user(connection: &mut MysqlConnection, name: &str) -> Option<User> {
     use crate::schema::user::{username, dsl::user};
-    use diesel::{select};
+    
 
     let result: Result<User, _> = user
         .filter(username.eq(name))
@@ -55,7 +55,7 @@ pub fn mail_exists(connection: &mut MysqlConnection, user_mail: &str) -> bool {
 
 pub fn get_token_for(connection: &mut MysqlConnection, name: &str) -> Option<Vec<u8>> {
     use crate::schema::user::{username, token, dsl::user};
-    use diesel::select;
+    
     
     let result: Result<Vec<u8>, _> = user
         .select(token)
@@ -71,7 +71,7 @@ pub fn get_token_for(connection: &mut MysqlConnection, name: &str) -> Option<Vec
 
 pub fn get_user_id(connection: &mut MysqlConnection, name: &str) -> Option<i32> {
     use crate::schema::user::{username, id, dsl::user};
-    use diesel::select;
+    
     
     let result: Result<i32, _> = user
         .select(id)
@@ -87,7 +87,7 @@ pub fn get_user_id(connection: &mut MysqlConnection, name: &str) -> Option<i32> 
 
 pub fn get_username(connection: &mut MysqlConnection, auth_token: &Vec<u8>) -> Option<String> {
     use crate::schema::user::{username, token, dsl::user};
-    use diesel::select;
+    
 
     let result: Result<String, _> = user
         .select(username)

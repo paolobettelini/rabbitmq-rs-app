@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-diesel = { version = "2.0.0", features = ["mysql", "chrono"] }
+diesel = { version = "2.0.0", features = ["mysql", "chrono", "r2d2"] }
 serde = { version = "1", features = ["derive"]}
 chrono = { version = "0.4.19" }
 diesel_migrations = "2.0.0"

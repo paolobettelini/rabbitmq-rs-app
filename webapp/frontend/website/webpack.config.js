@@ -1,7 +1,6 @@
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require('path');
 
-
 module.exports = {
   entry: {
     login: "./www/login.js",
@@ -16,10 +15,7 @@ module.exports = {
   mode: "development",
   plugins: [
     new CopyWebpackPlugin({
-      patterns: [
-        // { from: "www", to: "www" },
-        "www",
-      ],
+      patterns: [ "www" ],
     })
   ],
   experiments: {

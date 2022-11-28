@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 protocol = "3.4.0"
 protocol-derive = "3.4.0"
+lazy-regex = "2.3.1"

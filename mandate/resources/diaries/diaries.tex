@@ -520,4 +520,113 @@ When files are dropped into the dropzone the progress
 for each file is shown. So far only the upload progress to the
 webserver is displayed.
 
+\subsection{2022-11-14}
+
+\textbf{13:15 - 15:30} RabbitMQ Request/Reply \\
+\textbf{15:30 - 16:15} Database queries \\
+
+Today I implemented the Request/Reply pattern using RabbitMQ.
+A client can now successfully publish a message and await the response
+from a consumer. When a \textit{register} or \textit{login}
+form is sent, the user is actually inserted into or selected from the database.
+
+For the next working session I need to fix the auth token management. The token
+is not saved yet in the database.
+The next stpe is to start sending images to the backend.
+
+\subsection{2022-11-15}
+
+\textbf{08:20 - 09:50} Database \\
+\textbf{10:05 - 11:29} Documentation
+
+Today I implemented the autentication token in the database and fixed a couple of bugs.
+The login system is now fully working. I then documented the
+messaging request/reply pattern in RabbitMQ (\texttt{Implementation.Messaging.Request/Reply Pattern} section).
+
+\subsection{2022-11-16}
+
+\textbf{15:10 - 16:20} Read documentation
+
+Today I read the documentation about \texttt{Stream} in 
+\texttt{warp::filters::multipart::FormData} and \texttt{futures::stream}.
+I need this to process the images on the webserver.
+\\
+The goal for the next working session
+is to successfully store images in the database after sending them
+over to the backend.
+
+\subsection{2022-11-17}
+
+\textbf{08:20 - 09:50} VM Recovery \\
+\textbf{10:05 - 11:25} Server logic
+
+Today my Virtual Machine got corrupted.
+I spend the first half of the working session recovering it.
+I updated the system, fixed the pacman keyring, installed every tool needed,
+cloned the repository and compiled everything.
+In the second half of the working session I continued the server logic.
+I am having troubles sending the image to the backend server.
+
+\subsection{2022-11-21}
+
+\textbf{13:15 - 16:20} Implementation \\
+
+Today I implemented the image upload functionality.
+The images are sent over to the backend and saved in the database.
+The images are shrinked (lanczos3) and converted to a specific file format.
+Every user has its own images and the API serves them \texttt{/api/image/<id>}.
+I also fixed the multithreading on the webserver.
+The only feature left to implement, besides refactoring some code and completing the website,
+is the multithreading on the backend.
+
+\subsection{2022-11-22}
+
+\textbf{08:20 - 11:25} Documentation
+
+Today I continued the documentation.
+I wrote the following sections:
+\begin{itemize}
+    \item \texttt{Implementation.Frontend.Generating WebAssembly}
+    \item \texttt{Implementation.Frontend.Importing the module}
+    \item \texttt{Implementation.Webserver.Routing with warp}
+    \item \texttt{Implementation.Database.Diesel}
+\end{itemize}
+
+\subsection{2022-11-23}
+
+\textbf{15:10 - 15:30} Website \\
+\textbf{15:30 - 16:00} Helped a classmate \\
+\textbf{16:00 - 16:20} Multithreading
+
+Today I added the "load more" button in the gallery.
+Images are now loaded 5 at a time.
+I then tried to implement multithreading on the backend.
+The idea is to use an \texttt{Arc<RwLock<MessageConsumer>>} such that
+threads can share the same reference simultaneously, but there
+is a lock on \texttt{mut} (for the database access).
+
+\subsection{2022-11-24}
+
+\textbf{08:20 - 11:10} Parallelism
+
+I was able to make the database usable by multiple threads at once.
+Previosuly, I was working with \texttt{\&mut MysqlConnection}.
+The mutability allowed only one usage at a time. \\
+I implemented a \texttt{Pool<ConnectionManager<MysqlConnection>>} which does not
+need mutability and can produce \texttt{\&mut MysqlConnection}.
+This allowed me to remove the mutability requirement throughout the database
+code. I then tried to start multiple message-consuming threads, however I
+couldn't.
+
+\subsection{2022-11-28}
+
+\textbf{15:00 - 16:15} Refactor \\
+
+Today I spent the whole time refactoring code,
+fixing warnings and such. I realized that the final source
+code will not be as tidy and organized as I would have wanted to,
+since I don't have the Rust knowledge to do so, althought it's a problem
+that mainly affects the \texttt{webserver}.
+The code itself is almost done.
+
 \end{document}

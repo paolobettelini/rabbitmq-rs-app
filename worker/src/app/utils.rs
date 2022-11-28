@@ -1,7 +1,7 @@
 use image::{DynamicImage, ImageFormat};
 
 pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
-    use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+    use std::io::{Cursor, Read, Seek, SeekFrom};
 
     let color = image.color();
     let width = image.width();
@@ -10,7 +10,7 @@ pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
     // Implements `Seek` and `Write`
     let mut cursor = Cursor::new(Vec::new());
 
-    image::write_buffer_with_format(
+    let res = image::write_buffer_with_format(
         &mut cursor,
         &mut image.into_bytes(),
         width,
@@ -18,6 +18,10 @@ pub fn image_to_format(image: DynamicImage, format: ImageFormat) -> Vec<u8> {
         color,
         format,
     );
+
+    if res.is_err() {
+        return vec![];
+    }
 
     // Read result
     cursor.seek(SeekFrom::Start(0)).unwrap();

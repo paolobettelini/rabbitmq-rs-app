@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{info};
 
 use database::db::Database;
 use image::{imageops::FilterType, ImageFormat};
@@ -8,6 +8,7 @@ use protocol::{
     Parcel, Settings,
 };
 
+
 mod utils;
 
 const WIDTH: u32 = 200;
@@ -15,24 +16,46 @@ const HEIGHT: u32 = 200;
 const FORMAT: ImageFormat = ImageFormat::Png;
 
 pub struct App {
-    amqp: Rabbit<AppLogic>,
+    amqp: Rabbit,
+    db_connection_url: String,
 }
 
 impl App {
     pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
-        let consumer = AppLogic::new(db_connection_url).await;
-        let amqp = Rabbit::new(mb_connection_url, consumer).await;
+        let amqp = Rabbit::new(mb_connection_url).await;
 
-        App { amqp }
+        App {
+            amqp,
+            db_connection_url,
+        }
     }
 
-    pub async fn start(&mut self) {
+    pub async fn start(&self) {
         info!("Starting consumer");
 
+        let consumer = AppLogic::new(self.db_connection_url.clone()).await;
+        
         self.amqp
-            .consume_messages("queue", "consumer")
-            .await
-            .unwrap();
+        .consume_messages("queue", "consumer", consumer)
+        .await
+        .unwrap();
+        
+        /*
+        let consumer = Arc::new(consumer);
+        let n_workers = 42;
+        let n_jobs = 23;
+        let pool = ThreadPool::new(n_workers);
+
+        let amqp = Arc::new(&self.amqp);
+
+        for _ in 0..n_jobs {
+            pool.execute( move || {
+                amqp
+                    .consume_messages("queue", "consumer", consumer);
+                    //.await
+                    //.unwrap();
+            });
+        }*/
     }
 }
 
@@ -41,7 +64,7 @@ struct AppLogic {
 }
 
 impl MessageConsumer for AppLogic {
-    fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
+    fn consume(&self, delivery: &Delivery) -> Option<Vec<u8>> {
         let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
 
         info!("Received Delivery");
@@ -69,17 +92,15 @@ impl MessageConsumer for AppLogic {
 
 impl AppLogic {
     pub async fn new(db_connection_url: String) -> Self {
-        let mut database = Database::new(db_connection_url);
+        let database = Database::new(db_connection_url);
 
         info!("Running embedded migrations");
         database.run_embedded_migrations();
 
-        AppLogic {
-            database,
-        }
+        AppLogic { database }
     }
 
-    fn on_login_request(&mut self, data: &LoginRequestData) -> RabbitMessage {
+    fn on_login_request(&self, data: &LoginRequestData) -> RabbitMessage {
         let user = self.database.get_user(&data.username);
 
         match user {
@@ -111,7 +132,7 @@ impl AppLogic {
         }
     }
 
-    fn on_register_request(&mut self, data: &RegisterRequestData) -> RabbitMessage {
+    fn on_register_request(&self, data: &RegisterRequestData) -> RabbitMessage {
         let user_exists = self.database.user_exists(&data.username);
 
         if user_exists {
@@ -146,7 +167,7 @@ impl AppLogic {
         response
     }
 
-    fn on_get_image(&mut self, data: &GetImageData) -> RabbitMessage {
+    fn on_get_image(&self, data: &GetImageData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
             if let Some(image) = self.database.get_image(&username, data.index as i32) {
                 RabbitMessage::GetImageResponse(GetImageResponseData::Ok(GetImageResponseDataOk {
@@ -160,8 +181,7 @@ impl AppLogic {
         }
     }
 
-    // TODO, ensure parallelism
-    fn on_shrink_and_upload(&mut self, data: &ShrinkAndUploadData) -> RabbitMessage {
+    fn on_shrink_and_upload(&self, data: &ShrinkAndUploadData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
             let result = image::load_from_memory(&data.image);
 
@@ -188,7 +208,7 @@ impl AppLogic {
         }
     }
 
-    fn on_get_total_images(&mut self, data: &GetTotalImagesData) -> RabbitMessage {
+    fn on_get_total_images(&self, data: &GetTotalImagesData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
             let amount = self.database.get_total_images(&username);
 
@@ -211,12 +231,12 @@ impl AppLogic {
         }
     }
 
-    fn get_username(&mut self, token: &Vec<u8>) -> Option<String> {
+    fn get_username(&self, token: &Vec<u8>) -> Option<String> {
         self.database.get_username(token)
     }
 
     // This call assume that the user exists
-    fn get_token_for(&mut self, username: &str) -> Vec<u8> {
+    fn get_token_for(&self, username: &str) -> Vec<u8> {
         self.database.get_token_for(username).unwrap()
     }
 }

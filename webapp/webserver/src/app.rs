@@ -8,7 +8,7 @@ use tera::{Context, Tera};
 #[derive(Debug)]
 pub struct App {
     tera: Tera,
-    rabbit: Rabbit<()>,
+    rabbit: Rabbit,
 }
 
 impl App {
@@ -45,8 +45,8 @@ impl App {
         tera
     }
 
-    async fn init_rabbit(amqp: &str) -> Rabbit<()> {
-        Rabbit::<()>::new(amqp.to_owned(), ()).await
+    async fn init_rabbit(amqp: &str) -> Rabbit {
+        Rabbit::new(amqp.to_owned()).await
     }
 
     fn render_template(&self, name: &str, context: Context) -> Option<String> {
@@ -191,7 +191,10 @@ impl App {
         }
     }
 
-    pub async fn send_total_images_request(&self, data: GetTotalImagesData) -> GetTotalImagesResponseData {
+    pub async fn send_total_images_request(
+        &self,
+        data: GetTotalImagesData,
+    ) -> GetTotalImagesResponseData {
         let message = RabbitMessage::GetTotalImages(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 

@@ -11,6 +11,12 @@
 \usepackage{biblatex}   % references
 \usepackage{subfiles}   % project structure - best loaded last in the preamble
 \usepackage{graphicx}
+\usepackage{listings-rust}
+
+% Needed packages
+% texlive-core
+% texlive-bibtexextra
+% texlive-latexextra
 
 \hypersetup{
     colorlinks=true,
@@ -69,6 +75,60 @@
     stringstyle=\ttfamily\color{red!50!brown},
     morestring=*[d]{"},
     backgroundcolor=\color{background}
+}
+
+\lstdefinelanguage{JavaScript}{
+    keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+    keywordstyle=\color{blue}\bfseries,
+    ndkeywords={class, extends, export, boolean, throw, implements, import, this},
+    ndkeywordstyle=\color{olive}\bfseries,
+    sensitive=false,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{darkgray}\ttfamily,
+    morestring=[b]',
+    morestring=[b]",
+    stringstyle=\color{red}\ttfamily
+}
+
+\lstdefinestyle{js} {
+   language=JavaScript,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
+}
+
+\lstdefinelanguage{HTML5}{
+    keywords={head, body, div, ul, ol, lh, li, table, input, meta, title, thead, tbody, tr, th, pre, p, nav, main, header, h1, h2, h3, h4, h5, h6, footer, i, b, u, style, link, img, q},
+    keywordstyle=\color{blue}\bfseries,
+    sensitive=false,
+    comment=[s]{<!--}{-->},
+    commentstyle=\color{darkgray}\ttfamily,
+    morestring=[b]",
+    stringstyle=\color{red}\ttfamily
+}
+
+\lstdefinestyle{html} {
+   language=HTML5,
+   backgroundcolor=\color{lightgray},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=2,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b
 }
 
 \title{%

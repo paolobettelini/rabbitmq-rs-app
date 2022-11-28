@@ -4,42 +4,43 @@ use lapin::{options::*, publisher_confirm::PublisherConfirm, types::FieldTable, 
 use std::error::Error;
 use tokio_amqp::*;
 
-use futures::{join, StreamExt};
-use std::time::Duration;
+use futures::{StreamExt};
+use std::{
+    sync::{Arc},
+};
 
 use amq_protocol_types::ShortString;
-use uuid::Uuid;
+
 
 type Connection = deadpool::managed::Object<deadpool_lapin::Manager>;
 
 pub trait MessageConsumer {
-    fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>>;
+    fn consume(&self, delivery: &Delivery) -> Option<Vec<u8>>;
 }
 
 /// Generic type for instances that do not consume
 impl MessageConsumer for () {
-    fn consume(&mut self, delivery: &Delivery) -> Option<Vec<u8>> {
+    fn consume(&self, _delivery: &Delivery) -> Option<Vec<u8>> {
         None
     }
 }
 
 #[derive(Debug)]
-pub struct Rabbit<F: MessageConsumer> {
+pub struct Rabbit {
     pool: Pool,
-    consumer: F,
 }
 
-impl<F: MessageConsumer> Rabbit<F> {
-    pub async fn new(url: String, consumer: F) -> Self {
+impl Rabbit {
+    pub async fn new(url: String) -> Self {
         let options = ConnectionProperties::default().with_tokio();
         let manager = Manager::new(url, options);
 
         let pool: Pool = deadpool::managed::Pool::builder(manager)
             .max_size(10)
-        .build()
-        .unwrap();
+            .build()
+            .unwrap();
 
-        Self { pool, consumer }
+        Self { pool }
     }
 
     pub async fn publish(
@@ -51,7 +52,7 @@ impl<F: MessageConsumer> Rabbit<F> {
 
         let channel = connection.create_channel().await?;
 
-        let queue = channel
+        let _queue = channel
             .queue_declare(
                 queue_name,
                 QueueDeclareOptions::default(),
@@ -89,7 +90,7 @@ impl<F: MessageConsumer> Rabbit<F> {
             no_local: false,
             no_ack: true, // Important. Reply consumer cannot ACK
             exclusive: false,
-            nowait: false
+            nowait: false,
         };
         let mut consumer = channel
             .basic_consume(
@@ -100,9 +101,9 @@ impl<F: MessageConsumer> Rabbit<F> {
             )
             .await?;
 
-        let basic_properties = BasicProperties::default()
-            .with_reply_to(ShortString::from(reply_queue));
-        let pub_confirm = channel
+        let basic_properties =
+            BasicProperties::default().with_reply_to(ShortString::from(reply_queue));
+        let _pub_confirm = channel
             .basic_publish(
                 exchange,
                 publish_queue,
@@ -123,17 +124,50 @@ impl<F: MessageConsumer> Rabbit<F> {
         //Ok(pub_confirm)
     }
 
-    pub async fn consume_messages(
-        &mut self,
+    /*
+    pub async fn consume_messages_parallel<F: MessageConsumer>(
+        &self,
         queue_name: &str,
         consumer_name: &str,
-    ) -> std::result::Result<(), Box<dyn Error>>
-    {
-        let connection = get_rmq_con(self.pool.clone()).await?;
+        consumer: F,
+        n_workers: usize,
+        n_jobs: usize,
+    ) {
+        let consumer = Arc::new(consumer);
+        let pool = ThreadPool::new(n_workers);
+        let barrier = Arc::new(Barrier::new(n_jobs + 1));
+        /*
+        for _ in 0..n_jobs {
+            pool.execute(async move || {
+                self.consume_messages(queue_name, consumer_name, *consumer).await;
 
+                barrier.wait();
+            });
+        }*/
+
+        let connection = get_rmq_con(self.pool.clone()).await.unwrap();
+        let pool = self.pool.clone();
+
+        (0..n_jobs)
+            .map(|_| {
+                tokio::spawn(
+                    Rabbit::consume_messages(Box::new(pool.get()), queue_name, consumer_name, consumer)
+                )
+            })
+            .collect();
+    }*/
+
+    pub async fn consume_messages<F: MessageConsumer>(
+        &self,
+        queue_name: &str,
+        consumer_name: &str,
+        consumer: F,
+    ) -> std::result::Result<(), Box<dyn Error>> { 
+        let connection = get_rmq_con(self.pool.clone()).await?;
+        
         let channel = connection.create_channel().await?;
 
-        let queue = channel
+        let _queue = channel
             .queue_declare(
                 queue_name,
                 QueueDeclareOptions::default(),
@@ -141,7 +175,7 @@ impl<F: MessageConsumer> Rabbit<F> {
             )
             .await?;
 
-        let mut consumer = channel
+        let mut message_consumer = channel
             .basic_consume(
                 queue_name,
                 consumer_name,
@@ -149,17 +183,21 @@ impl<F: MessageConsumer> Rabbit<F> {
                 FieldTable::default(),
             )
             .await?;
+        
+        let shared_worker = Arc::new(consumer);
 
-        while let Some(delivery) = consumer.next().await {
+        while let Some(delivery) = message_consumer.next().await {
             if let Ok(delivery) = delivery {
-                let answer = self.consumer.consume(&delivery);
+                // Heavy lifting
+                let answer = shared_worker.consume(&delivery);
+
                 let properties = delivery.properties;
 
                 if let Some(reply_queue) = properties.reply_to() {
                     if let Some(answer) = answer {
                         // Publish answer to `reply_to` queue
                         let exchange = "";
-                        let pub_confirm = channel
+                        let _pub_confirm = channel
                             .basic_publish(
                                 exchange,
                                 reply_queue.as_str(),

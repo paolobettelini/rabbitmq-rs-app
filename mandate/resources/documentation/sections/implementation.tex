@@ -4,11 +4,104 @@
 
 \subsection{Frontend}
 
+\subsubsection{Generating WebAssembly}
+
+WebAssembly code is copiled from Rust code using the \texttt{wasm-pack} tool.
+The rust code uses the \texttt{wasm\_bindgen} crate to bind to WebAssembly.
+A function to export into the module might be written as
+
+\begin{lstlisting}[language=Rust]
+#[wasm_bindgen]
+pub fn hash(value: String) -> String {
+    let data = value.as_bytes().to_vec();
+
+    let digest = sha256(&data);
+
+    to_base64(digest)
+}
+\end{lstlisting}
+
+Compiling using
+\begin{lstlisting}[language=bash]
+    wasm-pack build
+\end{lstlisting}
+will produce a folder named \texttt{pkg/} which contains the wasm module.
+
+\subsubsection{Importing the module}
+
+I used \texttt{webpack} to integrate the wasm module in the website
+and be able to call wasm function from JavaScript.
+
+\textbf{package.json}
+\begin{lstlisting}[language=json]
+{
+    "name": "webapp-frontend",
+    "version": "0.1.0",
+    "description": "Frontend",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack --config webpack.config.js"
+    },
+    "author": "Paolo Bettelini",
+    "devDependencies": {
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0",
+        "copy-webpack-plugin": "^11.0.0"
+    },
+    "dependencies": {
+        "frontend": "file:../pkg"
+    }
+}
+\end{lstlisting}
+
+\textbf{webpack.config.js}
+\begin{lstlisting}[style=js]
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const path = require('path');
+
+module.exports = {
+  entry: {
+    login: "./www/login.js",
+    register: "./www/register.js",
+    upload: "./www/upload.js",
+    gallery: "./www/gallery.js"
+  },
+  output: {
+    path: path.resolve(__dirname, "dist"),
+    filename: "[name].bundle.js",
+  },
+  mode: "development",
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [ "www" ],
+    })
+  ],
+  experiments: {
+    asyncWebAssembly: true
+  }
+};
+\end{lstlisting}
+
+To compile the website to static files run
+\begin{lstlisting}[language=bash]
+    npm run build
+\end{lstlisting}
+
+To call a wasm function within the file \texttt{login.js}
+we can do the following.
+
+\begin{lstlisting}[style=js]
+    import { hash } from 'frontend'
+
+    console.log(hash('Hello World'));
+\end{lstlisting}
+
+The compiled file is called \texttt{login.bundle.js}
+which is what the HTML page will need to include (see webpack config).
+
+\pagebreak
+
 \subsection{Webserver}
-
-\subsubsection{Routing}
-
-The webserver
 
 \subsubsection{Templating}
 
@@ -17,7 +110,7 @@ To do so a template engine is needed. The template engine renders the HTML conte
 when needed.
 
 I used a template engine library for Rust called
-\href{https://github.com/Keats/tera}{tera} \cite[tera].
+\href{https://github.com/Keats/tera}{tera}.
 Logic blocks can be integrated in the HTML file like so
 \begin{lstlisting}[language=html]
 <ul>
@@ -31,17 +124,89 @@ HTML files containing templating needs to be stored in RAM.
 When the webservers starts it loads from the \texttt{www} folder
 every file containing templating code.
 
-\subsubsection{Routing}
+\subsubsection{Routing using warp}
 
 The webserver needs to respond to different routes.
-I used a composable Rust framework called rust
-\href{https://github.com/seanmonstar/warp}{warp} \cite{warp}. 
+I used a composable Rust framework called
+\href{https://github.com/seanmonstar/warp}{warp} \cite{warp}.
 
+The routes are the following:
+\begin{itemize}
+    \item \textbf{/} \(\rightarrow\) Serve index page
+    \item \textbf{/register} \(\rightarrow\) Serve register page
+    \item \textbf{/login} \(\rightarrow\) Serve login page
+    \item \textbf{/logout} \(\rightarrow\) Serve logout page
+    \item \textbf{/upload} \(\rightarrow\) Serve upload page
+    \item \textbf{/gallery} \(\rightarrow\) Serve gallery page
+    \item \textbf{/api/register} \(\rightarrow\) Register action
+    \item \textbf{/api/login} \(\rightarrow\) Login action
+    \item \textbf{/api/logout} \(\rightarrow\) Logout action
+    \item \textbf{/api/image/<id>} \(\rightarrow\) Get image action
+    \item \textbf{/<file>} \(\rightarrow\) Serve static file
+    \item \textbf{/index.html} \(\rightarrow\) Block action
+    \item \textbf{/register.html} \(\rightarrow\) Block action
+    \item \textbf{/login.html} \(\rightarrow\) Block action
+    \item \textbf{/logout.html} \(\rightarrow\) Block action
+    \item \textbf{/upload.html} \(\rightarrow\) Block action
+    \item \textbf{/gallery.html} \(\rightarrow\) Block action
+\end{itemize}
+
+\pagebreak
 
 \subsection{Database}
 
-The databased is an instance of \texttt{MariaDB}.
+The database is an instance of \texttt{MariaDB}.
 
+\subsubsection{Diesel}
+
+\texttt{diesel} is an ORM library for the Rust programming language.
+It supports MySQL, Postgres and SQLite and can manage migrations.
+
+Diesel comes with a CLI tool to manage migrations.
+A configuration file (\texttt{diesel.toml}) may be placed in the cargo project.
+
+\begin{lstlisting}
+[migrations_directory]
+dir = "migrations" # folder containing the migrations
+\end{lstlisting}
+
+A table with the name \texttt{\_\_diesel\_schema\_migrations}
+is automatically created on the database to keep track of all the migrations
+run.
+
+%<URL> --database-url mysql://worker:root@192.168.56.10:3306/service
+%diesel migration generate data
+%diesel migration run <URL>
+%diesel print-schema > src/schema.rs <URL>
+
+\textbf{Creating a migration}
+\begin{lstlisting}[language=bash]
+    diesel migration generate <name>
+\end{lstlisting}
+This command will generate a migration in the migration folder with the current timestamp.
+The files \texttt{up.sql} and \texttt{down.sql} created.
+
+\textbf{Executing migrations}
+\begin{lstlisting}[language=bash]
+    diesel migration <run|redo|revert>
+\end{lstlisting}
+This command will run, redo or revert the migration on the database.
+The database service address must be passed using
+the \texttt{--database-url} parameter or by setting the \texttt{DATBASE\_URL}
+enviroment variable.
+
+\textbf{Generating schema file}
+\begin{lstlisting}[language=bash]
+    diesel print-schema > src/schema.rs
+\end{lstlisting}
+This command will generate the \texttt{schema.rs} file.
+This file is produced from the databased and is used to
+perform compiled-time checked queries.
+The database service address must be passed using
+the \texttt{--database-url} parameter or by setting the \texttt{DATBASE\_URL}
+enviroment variable.
+
+\texttt{up.sql}
 \begin{lstlisting}[style=sql]
     CREATE TABLE user (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -50,9 +215,7 @@ The databased is an instance of \texttt{MariaDB}.
         password BINARY(32) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-\end{lstlisting}
-
-\begin{lstlisting}[style=sql]
+    
     CREATE TABLE image (
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
@@ -65,10 +228,78 @@ The databased is an instance of \texttt{MariaDB}.
     );
 \end{lstlisting}
 
-\subsubsection{Diesel}
+\texttt{down.sql}
+\begin{lstlisting}[style=sql]
+    DROP TABLE image;
+    DROP TABLE user;
+\end{lstlisting}
 
-\texttt{diesel} is an ORM library for the Rust programming language.
-It supports MySQL, Postgres and SQLite.
+The migration can be included in the code at compile time using a macro and run
+at the start of the program, like so
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    fn run_embedded_migrations(connection: &mut MysqlConnection) {
+        const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+        connection.run_pending_migrations(MIGRATIONS).unwrap();
+    }
+\end{lstlisting}
+
+The traits \texttt{Queryable} and \texttt{Insertable} can be automatically derived
+for structures, such that diesel can execute queries and inserts directly with the structures
+themselves.
+
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    #[derive(Queryable, Debug)]
+    #[diesel(table_name = user)]
+    pub struct User {
+        pub id: i32,
+        pub mail: String,
+        pub username: String,
+        pub password: Vec<u8>,
+        pub token: Vec<u8>,
+        pub created_at: NaiveDateTime,
+    }
+    
+    #[derive(Insertable)]
+    #[diesel(table_name = user)]
+    pub struct NewUser<'a> {
+        pub mail: &'a str,
+        pub username: &'a str,
+        pub password: &'a Vec<u8>,
+        pub token: &'a Vec<u8>,
+    }
+    
+    #[derive(Queryable, Debug)]
+    #[diesel(belongs_to(User))]
+    #[diesel(table_name = image)]
+    pub struct Image {
+        pub id: i32,
+        pub user_id: i32,
+        pub uploaded_at: NaiveDateTime,
+        pub data: Vec<u8>,
+    }
+    
+    #[derive(Insertable)]
+    #[diesel(belongs_to(User))]
+    #[diesel(table_name = image)]
+    pub struct NewImage<'a> {
+        pub id: i32,
+        pub user_id: i32,
+        pub data: &'a Vec<u8>,
+    }
+\end{lstlisting}
+
+Queries and inserts are executed using the schema file.
+
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    use crate::schema::user::{username, token, dsl::user};
+    use diesel::select;
+    // select token of user with a given username
+    let result: Result<Vec<u8>, _> = user
+        .select(token)
+        .filter(username.eq(name))
+        .first(connection);
+\end{lstlisting}
 
 \subsection{Load Balancer}
 
@@ -77,6 +308,48 @@ It supports MySQL, Postgres and SQLite.
 \subsection{Messaging}
 
 \subsubsection{RabbitMQ}
+
+% parlare anche degli ack
+
+\pagebreak
+
+\subsubsection{Request/Reply Pattern}
+
+A common requirement within a messaging system is a request/reply pattern.
+A client must be able to publish a message in a queue and \textit{await}
+a response from a consumer.
+
+\paragraph{Method 1} The most intuitive method is to generate a temporary queue for each request.
+A client will declare a queue with a random name. Before publishing the message to the main queue,
+it will set the \texttt{reply\_to} field. When a consumer consumes this message it will also read the
+\texttt{reply\_to} field and send the reply to the specified queue. After publishing the client will start consume
+from the temporary queue. Upon arrival of the message it will stop consuming and delete the queue.
+This approach is rather inefficient since we need to declare a new queue for each request.
+
+\paragraph{Method 2} Instead of generating a new queue per request we might create a long-lived queue
+just for this purpose. Like before, the client sets the \texttt{reply\_to} field and the consumer replies
+to this queue. The client awaits the message in the reply queue. However, if multiple clients
+are await a response from some consumer, the reply messages may overlap in the reply queue and cause a malfunction.
+This can be resolved by settings the \texttt{correlation\_id} field in the message (UUID). This value is copied
+over by the consumer to the \texttt{correlation\_id} field of the response. The awaiting clients will start to
+sequentially receive the replies, they will check the \texttt{correlation\_id} field and if it is not theirs
+their will ignore it. If the message is the one they have been awaiting the will consume it and send an acknowledgment.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{request-reply.pdf}
+    \caption{Request Reply Infastructure}
+\end{figure}
+
+\paragraph{Method 3} RabbitMQ has a \textit{built-in} request/reply pattern which is easier to implement and more efficient.
+The client will set the \texttt{reply\_to} field to \textbf{amq.rabbitmq.reply-to}.
+This is a pseudo-queue known by the RabbitMQ server. When the server processes the message it will change
+the \texttt{reply\_to} field to \textbf{amq.rabbitmq.reply-to.<token>} where \textbf{<token>} is a randomly generated
+token. The consumer will consume the message and publish the response to the \textbf{amq.rabbitmq.reply-to.<token>}
+pseudo-queue. The client will await the reply in no-ACK mode by consuming from the \textbf{amq.rabbitmq.reply-to} pseudo-queue.
+This method does not require the client to send an acknowledgment for the reply and the reply is directly sent back to the client.
+
+\pagebreak
 
 \subsubsection{Messages}
 

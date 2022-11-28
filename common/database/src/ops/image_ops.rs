@@ -1,19 +1,19 @@
 use crate::models::{NewImage, Image};
 use diesel::prelude::*;
 
-pub fn insert_image(connection: &mut MysqlConnection, username: &str, new_image: NewImage) {
+pub fn insert_image(connection: &mut MysqlConnection, _username: &str, new_image: NewImage) {
     use crate::schema::image::dsl::*;
-    
+
     diesel::insert_into(image)
         .values(&new_image)
         .execute(connection)
-        .expect("Error saving new user");
+        .expect("Error saving new image");
 }
 
 pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
     use crate::schema::image::{id, user_id, dsl::image};
     use crate::schema::user::{id as id_field, username, dsl::user};
-    use diesel::{select, dsl::count};
+    use diesel::{dsl::count};
     
     let id_to_filter: i32 = user
         .filter(username.eq(name))
@@ -31,9 +31,9 @@ pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
 }
 
 pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Option<Image> {
-    use crate::schema::image::{id as image_id, user_id as user_id_image, data, dsl::image};
+    use crate::schema::image::{id as image_id, user_id as user_id_image, dsl::image};
     use crate::schema::user::{id as user_id_user, username, dsl::user};
-    use diesel::select;
+    
 
     let id_to_filter: i32 = {
         let result = user
