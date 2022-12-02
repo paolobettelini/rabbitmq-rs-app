@@ -44,7 +44,6 @@ pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Op
         if let Ok(value) = result {
             value
         } else {
-            println!("NONE");
             return None;
         }
     };

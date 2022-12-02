@@ -5,28 +5,52 @@
 \subsection{mandate}
 
 The \texttt{mandate} folder contains all the documents regarding
-the project (documentation + diary).
-
-\subsection{common}
-
-\texttt{common/} is a collection of Rust libraries.
-
-\subsubsection{config}
-
-\subsubsection{database}
-
-\subsubsection{messaging}
+the project (documentation and diary).
 
 \subsection{worker}
 
 \texttt{worker/} is the Rust project for the backend service.
+The worker consumes messages from the AMQP server
+and processes them by interacting with the database.
 
-\subsubsection{Usage}
+\subsection{webapp}
 
-\subsection{webserver}
+\texttt{webapp/} contais the softwre regarding the webserver and frontend.
 
-\texttt{webserver/} is TODO.
+\subsubsection{webserver}
 
-\subsubsection{Usage}
+\textit{webserver} is the Rust project for the webserver.
+This program serves the web page and handles
+the API routes. It send messages to the AMQP server
+and awaits the responses once the requests are processed
+by a backend server.
+
+\subsubsection{frontend}
+
+\textit{frontend} is the program containing Rust code which is compiled to WebAssembly.
+This project be compield to a WASM module and interacted with with JavaScript on the frontend.
+
+\subsection{common}
+
+\texttt{common/} is a collection of own Rust libraries
+shared accross the programs.
+
+\subsubsection{config}
+
+\textit{common} is a library tohelp parse the TOML configuration files.
+This library is used by the webserver and worker programs.
+
+\subsubsection{database}
+
+\textit{database} is a library wrapper around the database structure
+of this project. It is only used by the worker server.
+
+\subsubsection{messaging}
+
+\textit{messaging} is a library to
+publish and consume messages to an AMQP server.
+The request/reply pattern is also available.
+This library is used both by the websever
+and worker.
 
 \end{document}

@@ -1,0 +1,75 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\subsection{Frontend}
+
+\subsubsection{Compilation}
+
+The frontend project is compiled into WASM and then
+static files for the website are generated.
+
+\begin{lstlisting}[language=bash]
+cd webapp/frontend/website
+wasm-pack build --release
+npm install
+npm run build
+\end{lstlisting}
+
+The \texttt{wasm-pack} commands compiles the Rust code into
+a WASM module in the folder \texttt{./pkg}.
+The npm script \textit{build} generates the static website files
+from the files of the website (\textit{www} folder)
+and the WASM module (\textit{pkg} folder).
+The static files are placed in \texttt{./dist}.
+
+\subsection{Webserver}
+
+\subsubsection{Compilation}
+
+The compilation is done using cargo.
+
+\begin{lstlisting}[language=bash]
+cd webapp/webserver
+cargo build --release
+\end{lstlisting}
+
+The executable is now at \texttt{./target/release/webserver}.
+
+\subsubsection{Usage}
+
+\begin{lstlisting}
+    USAGE:
+    webserver --config <CONFIG>
+
+    OPTIONS:
+        -c, --config <CONFIG>    Configuration file
+        -h, --help               Print help information
+\end{lstlisting}
+
+\subsection{Worker}
+
+\subsubsection{Compilation}
+
+The compilation is done using cargo. \\
+Note that you need to have the \textit{diesel} command installed.
+
+\begin{lstlisting}[language=bash]
+cd worker
+cargo build --release
+\end{lstlisting}
+
+The executable is now at \texttt{./target/release/worker}.
+
+\subsubsection{Usage}
+
+\begin{lstlisting}
+    USAGE:
+    worker --config <CONFIG>
+
+    OPTIONS:
+        -c, --config <CONFIG>    Configuration file
+        -h, --help               Print help information
+\end{lstlisting}
+
+\end{document}

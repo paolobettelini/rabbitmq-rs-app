@@ -31,6 +31,7 @@ will produce a folder named \texttt{pkg/} which contains the wasm module.
 
 I used \texttt{webpack} to integrate the wasm module in the website
 and be able to call wasm function from JavaScript.
+\texttt{npm} is used to handle the dependencies.
 
 \textbf{package.json}
 \begin{lstlisting}[language=json]
@@ -512,6 +513,288 @@ This method does not require the client to send an acknowledgment for the reply 
     UnknownUsername & () & Username is unknown
 }
 
+\pagebreak
+
+\subsubsection{Binding}
+
+The binding to RabbitMQ is done via the \texttt{lapin} crate.
+
+\subsection{Dependencies}
+
+Here's a list of all the libraries used within the project
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (worker)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        clap & CLI Parser & 3.2.20 & derive \\
+        \hline
+        tokio & Asynchronous runtime & 1 & full \\
+        \hline
+        log & Logging inerface & 0.4 & \\
+        \hline
+        env\_logger & Logging implementation & 0.9.0 & \\
+        \hline
+        sha2 & SHA-2 hash function family & 0.10.5 & \\
+        \hline
+        image & Imaging library & 0.24.5 & \\
+        \hline
+        futures & Future and streams & 0.3.17 & \\
+        \hline
+        rand & Random number generators & 0.8.5 & \\
+        \hline
+        database & (Own) database library & - & \\
+        \hline
+        messaging & (Own) messaging library & - & \\
+        \hline
+        config & (Own) config library & - & \\
+        \hline
+        protocol & (Own) protocol library & - & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (webserver)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        log & Logging inerface & 0.4 & \\
+        \hline
+        env\_logger & Logging implementation & 0.9.0 & \\
+        \hline
+        clap & CLI Parser & 3.2.20 & derive \\
+        \hline
+        tokio & Asynchronous runtime & 1 & full \\
+        \hline
+        warp & Web server framework & 0.3.3 &  \\
+        \hline
+        serde & Serialization/deserialization framework & 1.0 & derive \\
+        \hline
+        tower & client and server components & 0.4 & \\
+        \hline
+        tower-http & HTTP middleware & 0.3 & full \\
+        \hline
+        futures & Future and streams & 0.3.25 & - \\
+        \hline
+        bytes & Bytes utilities & 1.2.1 & \\
+        \hline
+        tera & Template engine & 1.17.1 & \\
+        \hline
+        lazy\_static & Lazily evaluated statics & 1.4.0 & \\
+        \hline
+        once\_cell & Single assignment cells & 1.16.0 & \\
+        \hline
+        base64 & Base64 encoder/decoder & 0.13.1 & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2.3cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (frontend)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        wasm-bindgen & JS and Rust interaction & 0.2.83 & \\
+        \hline
+        console\_error\_panic\_hook & Logs panics to wasm32 & 0.1.7 & \\
+        \hline
+        wee\_alloc & Allocator & 0.4.5 & \\
+        \hline
+        js\_sys & JS objects binding & 0.3.60 & \\
+        \hline
+        base64 & Base64 encoder/decoder & 0.13.1 & \\
+        \hline
+        web-sys & Binding to Web APIs & 0.3.60 & \\
+        \hline
+        protocol & (Own) protocol library & - & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2.3cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (config)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        serde & Serialization/deserialization framework & 1 & derive \\
+        \hline
+        toml & TOML parser & 0.5.9 & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2.3cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (database)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        serde & Serialization/deserialization framework & 1 & derive \\
+        \hline
+        diesel & Database ORM & 2.0.0 & mysql, chrono, r2d2 \\
+        \hline
+        chrono & Datetimes & 0.4.19 & \\
+        \hline
+        diesel\_migrations & Diesel migrations & 2.0.0 & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2.3cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (protocol)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        protocol & Protocol definitions & 3.4.0 & \\
+        \hline
+        protocol-derive & Protocol definitions & 3.4.0 & \\
+        \hline
+        lazy\_regex & Lazily evaluated regex & 2.3.1 & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{2.3cm}|p{4cm}|p{1.5cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table (messaging)}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Vesion} & \textbf{Features} \\
+        \hline
+        lapin & AMQP client & 2.1.1 & \\
+        \hline
+        amq-protocol-types & AMQP specifications & 7.0.1 & \\
+        \hline
+        tokio & Asynchronous runtime & 1 & full \\
+        \hline
+        tokio-amqp & lapin integration with tokio & 2.0.0 & \\
+        \hline
+        deadpool & Connection pool & 0.9.5 & \\
+        \hline
+        deadpool-lapin & Connection pool for lapin & 0.10.0 & \\
+        \hline
+        futures & Future and streams & 0.3.17 & \\
+        \hline
+        uuid & UUID utils & 1.1.2 & v4, fast-rng, macro-diagnostics \\
+        \hline
+        threadpool & Thread pools & 1.8.1 & \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
 % TODO alias types e.g. Image
+
+\pagebreak
+
+\subsection{Config files}
+
+The \textit{worker} and \textit{worker} require a configuration
+file which is passed through a CLI argument.
+The configuration files look as follows:
+
+\paragraph{worker} \texttt{config.toml}
+
+\begin{lstlisting}[style=toml, numbers=none]
+# Alternately, comment the [database] section and
+# set the enviroment variable
+#
+# DATABASE_URL="mysql://worker:root@192.168.1.10:3306/service"
+[database]
+address = "192.168.1.10"
+port = 3306
+username = "worker"
+password = "root"
+name = "service"
+
+# Alternately, comment the [rabbit] section and
+# set the enviroment variable
+#
+# AMQP_URL=amqp://worker:root@192.168.1.11:5672/vhost
+[rabbit]
+address = "192.168.1.11"
+port = 5672
+username = "worker"
+password = "root"
+vhost = "vhost"
+
+# Alternately, comment the [log] section and
+# set the enviroment variables (only RUST_LOG is fine)
+#
+# RUST_LOG="info"
+# RUST_LOG_STYLE="auto"
+#
+# See https://doc.servo.org/env_logger/index.html
+[log]
+log = "debug"
+style = "auto"
+\end{lstlisting}
+
+\pagebreak
+
+\paragraph{webserver} \texttt{config.toml}
+
+\begin{lstlisting}[style=toml, numbers=none]
+[http]
+www = "/path/to/dist"
+ip = "0.0.0.0"
+port = 8080
+
+# Alternately, comment the [rabbit] section and
+# set the enviroment variable
+#
+# AMQP_URL=
+[rabbit]
+address = "192.168.1.11"
+port = 5672
+username = "worker"
+password = "root"
+vhost = "vhost"
+
+# Alternately, comment the [log] section and
+# set the enviroment variables (only RUST_LOG is fine)
+#
+# RUST_LOG="info"
+# RUST_LOG_STYLE="auto"
+#
+# See https://doc.servo.org/env_logger/index.html
+[log]
+log = "info"
+style = "auto"
+\end{lstlisting}
 
 \end{document}

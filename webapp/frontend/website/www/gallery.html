@@ -10,6 +10,33 @@
         #content {
             padding: 5%;
         }
+
+        button {
+            background: #f5ba1a;
+            height: 35px;
+            line-height: 35px;
+            width: 100%;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            color: #fff;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            -webkit-transition: all 0.3s ease-in-out;
+            -moz-transition: all 0.3s ease-in-out;
+            -ms-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+        }
+        button:hover {
+            background: #e1a70a;
+        }
+        button:focus {
+            background: #e1a70a;
+        }
+
+        #images img {
+            padding: 20px;
+        }
     </style>
     <title>Progetto</title>
 </head>
@@ -26,13 +53,12 @@
     <br><br>
 
     <div id="content">
-        <h3>Total images: <span id="img-num">...</span></h3>
+        <h3>Total images: <span id="img-num">...</span> <span id="img-counter">(0/...)</span></h3>
 
         <div id="images"></div>
-    </div>
 
-    <br>
-    <button id="load-more-button">Load More</button>
+        <button id="load-more-button">Load More</button>
+    </div>
 
     <script src="/gallery.bundle.js"></script>
 </body>

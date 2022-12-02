@@ -106,6 +106,7 @@ Vagrant.configure("2") do |config|
     rabbitmqctl add_user #{MB_USER} #{MB_USER_PASS}
     rabbitmqctl add_vhost #{MB_VHOST_NAME}
     rabbitmqctl set_permissions -p #{MB_VHOST_NAME} #{MB_USER} #{MB_USER_HOST_PERM}
+    rabbitmqctl set_user_tags #{MB_USER} administrator
 
     rabbitmq-plugins enable rabbitmq_management
     

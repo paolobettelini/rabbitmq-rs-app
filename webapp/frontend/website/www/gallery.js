@@ -23,11 +23,16 @@ async function postData(url = '', data = {}) {
     return await response.json();
 }
 
-var loaded = 0;
-var total = null;
+let loaded = 0;
+let total = null;
 
-var imageContainer = document.getElementById('images');
-var loadMoreButton = document.getElementById('load-more-button');
+let imageContainer = document.getElementById('images');
+let loadMoreButton = document.getElementById('load-more-button');
+let imgCounter = document.getElementById('img-counter');
+
+const CHUNK = 5;
+
+let queue = []; // Images queue
 
 postData('/api/total-images')
     .then(json => {
@@ -35,24 +40,49 @@ postData('/api/total-images')
         total = json['response'];
         container.innerHTML = total;
 
-        load(5);
+        load(CHUNK);
+        updateButton();
     });
 
 function load(amount) {
     amount = Math.min(loaded + amount, total) - loaded;
     for (let i = loaded + 1; i <= loaded + amount; i++) {
-        loadImage(i);
+        loadImage(i, i == loaded + amount);
     }
     loaded += amount;
 }
 
-loadMoreButton.onclick = () => load(5);
+loadMoreButton.onclick = () => {
+    load(CHUNK);
+    updateButton();
+};
 
-function loadImage(index) {
+function updateButton() {
+    let amount = Math.min(loaded + CHUNK, total) - loaded;
+    if (amount == 0) {
+        loadMoreButton.style.display = 'none';
+    } else {
+        loadMoreButton.innerText = `Load more (${amount})`;
+    }
+
+    imgCounter.innerText = `(${loaded}/${total})`;
+}
+
+function loadImage(index, lastInChunk) {
     console.log(`Loading image [${index}]`);
     
     let img = document.createElement('img');
     img.src = `/api/image/${index}`;
-    
-    imageContainer.appendChild(img);
+    queue.push(img);
+
+    if (lastInChunk) {
+        img.onload= () => {
+            queue.forEach((img, _) => {
+                imageContainer.appendChild(img);
+            });
+
+            // clear queue
+            queue = [];
+        }
+    }
 }
