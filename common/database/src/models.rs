@@ -1,8 +1,7 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-
-use crate::schema::{image, user};
+use crate::schema::{image, user, log};
 
 #[derive(Queryable, Debug)]
 #[diesel(table_name = user)]
@@ -41,4 +40,18 @@ pub struct NewImage<'a> {
     pub id: i32,
     pub user_id: i32,
     pub data: &'a Vec<u8>,
+}
+
+#[derive(Queryable, Debug)]
+#[diesel(table_name = log)]
+pub struct Log {
+    pub id: i32,
+    pub log_date: NaiveDateTime,
+    pub message: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = log)]
+pub struct NewLog<'a> {
+    pub message: &'a str,
 }

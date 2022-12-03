@@ -13,7 +13,6 @@ pub fn create_user(connection: &mut MysqlConnection, new_user: NewUser) {
 pub fn get_user(connection: &mut MysqlConnection, name: &str) -> Option<User> {
     use crate::schema::user::{username, dsl::user};
     
-
     let result: Result<User, _> = user
         .filter(username.eq(name))
         .first(connection);

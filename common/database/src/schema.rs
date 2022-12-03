@@ -20,6 +20,14 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    log (id) {
+        id -> Integer,
+        log_date -> Timestamp,
+        message -> Varchar,
+    }
+}
+
 diesel::joinable!(image -> user (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

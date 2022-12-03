@@ -1,9 +1,14 @@
 use diesel::{prelude::*, r2d2::{PooledConnection, Pool, ConnectionManager}};
 use diesel_migrations::*;
 
-use crate::models::{NewUser, User, NewImage, Image};
-use crate::ops::user_ops as users;
-use crate::ops::image_ops as images;
+use crate::{
+    models::{NewUser, User, NewImage, Image, NewLog},
+    ops::{
+        user_ops as users,
+        image_ops as images,
+        log_ops as logs
+    }
+};
 
 type MysqlPool = Pool<ConnectionManager<MysqlConnection>>;
 
@@ -72,6 +77,12 @@ impl Database {
 
     pub fn get_total_images(&self, username: &str) -> u32 {
         images::get_total_images(&mut self.get_connection(), username)
+    }
+
+    pub fn insert_log(&self, message: &str) {
+        let new_log = NewLog { message };
+
+        logs::insert_log(&mut self.get_connection(), new_log);
     }
 
     pub fn run_embedded_migrations(&self) {
