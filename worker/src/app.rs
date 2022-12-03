@@ -8,7 +8,7 @@ use protocol::{
     rabbit::{RabbitMessage::*, *},
     Parcel, Settings,
 };
-
+use uuid::Uuid;
 
 mod utils;
 
@@ -26,6 +26,9 @@ impl App {
         let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
         let database = Arc::new(Database::new(db_connection_url));
 
+        info!("Running embedded migrations");
+        database.run_embedded_migrations();
+
         App {
             amqp,
             database,
@@ -37,17 +40,21 @@ impl App {
         
         let mut futs = vec![];
 
-        for i in 0..num_cpus::get() {
+        let cpus = num_cpus::get();
+        info!("Starting {} worker threads", cpus);
+
+        for i in 0..cpus {
             let amqp = self.amqp.clone();
             let database = self.database.clone();
 
-            futs.push(async move {
-                println!("Running thread {}", i);
-                
+            futs.push(async move {                
                 let consumer = AppLogic::new(database.clone());
 
+                let queue_name = "queue";
+                let consumer_name = Uuid::new_v4().to_string();
+
                 amqp
-                    .consume_messages("queue", "consumer", consumer)
+                    .consume_messages(queue_name, &consumer_name, consumer)
                     .await
                     .unwrap();
             });
@@ -91,9 +98,6 @@ impl MessageConsumer for AppLogic {
 
 impl AppLogic {
     pub fn new(database: Arc<Database>) -> Self {
-        info!("Running embedded migrations");
-        database.run_embedded_migrations();
-
         AppLogic { database }
     }
 

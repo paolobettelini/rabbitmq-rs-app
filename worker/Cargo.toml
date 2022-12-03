@@ -15,6 +15,7 @@ image = "0.24.5"
 futures = { version = "0.3.17", default-features = true }
 rand = "0.8.5"
 num_cpus = "1.14.0"
+uuid = { version = "1.1.2", features = ["v4", "fast-rng"] }
 
 database = { path = "../common/database" }
 messaging = { path = "../common/messaging" }

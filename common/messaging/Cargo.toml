@@ -11,5 +11,4 @@ tokio-amqp = "2.0.0"
 deadpool = "0.9.5" # lapin connection pool
 deadpool-lapin = "0.10.0"
 futures = { version = "0.3.17", default-features = true }
-uuid = { version = "1.1.2", features = ["v4", "fast-rng", "macro-diagnostics"] }
 threadpool = "1.8.1" # thread pool

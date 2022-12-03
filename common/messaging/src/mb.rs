@@ -124,39 +124,6 @@ impl Rabbit {
         //Ok(pub_confirm)
     }
 
-    /*
-    pub async fn consume_messages_parallel<F: MessageConsumer>(
-        &self,
-        queue_name: &str,
-        consumer_name: &str,
-        consumer: F,
-        n_workers: usize,
-        n_jobs: usize,
-    ) {
-        let consumer = Arc::new(consumer);
-        let pool = ThreadPool::new(n_workers);
-        let barrier = Arc::new(Barrier::new(n_jobs + 1));
-        /*
-        for _ in 0..n_jobs {
-            pool.execute(async move || {
-                self.consume_messages(queue_name, consumer_name, *consumer).await;
-
-                barrier.wait();
-            });
-        }*/
-
-        let connection = get_rmq_con(self.pool.clone()).await.unwrap();
-        let pool = self.pool.clone();
-
-        (0..n_jobs)
-            .map(|_| {
-                tokio::spawn(
-                    Rabbit::consume_messages(Box::new(pool.get()), queue_name, consumer_name, consumer)
-                )
-            })
-            .collect();
-    }*/
-
     pub async fn consume_messages<F: MessageConsumer>(
         &self,
         queue_name: &str,
@@ -164,7 +131,7 @@ impl Rabbit {
         consumer: F,
     ) -> std::result::Result<(), Box<dyn Error>> { 
         let connection = get_rmq_con(self.pool.clone()).await?;
-        
+
         let channel = connection.create_channel().await?;
 
         let _queue = channel
@@ -184,31 +151,29 @@ impl Rabbit {
             )
             .await?;
         
-        let shared_worker = Arc::new(consumer);
-
         while let Some(delivery) = message_consumer.next().await {
             if let Ok(delivery) = delivery {
                 // Heavy lifting
-                let answer = shared_worker.consume(&delivery);
-
+                let answer = consumer.consume(&delivery);
+                
                 let properties = delivery.properties;
-
+                
                 if let Some(reply_queue) = properties.reply_to() {
                     if let Some(answer) = answer {
                         // Publish answer to `reply_to` queue
                         let exchange = "";
                         let _pub_confirm = channel
-                            .basic_publish(
-                                exchange,
-                                reply_queue.as_str(),
-                                BasicPublishOptions::default(),
-                                &answer,
-                                BasicProperties::default(),
-                            )
-                            .await?;
+                        .basic_publish(
+                            exchange,
+                            reply_queue.as_str(),
+                            BasicPublishOptions::default(),
+                            &answer,
+                            BasicProperties::default(),
+                        )
+                        .await?;
                     }
                 }
-
+                
                 // Ack the message
                 channel
                     .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
