@@ -1,27 +1,16 @@
-
 use clap::Parser;
 
 use log::{error, info};
 
-
-
-
-use std::{
-    env,
-    net::{IpAddr},
-    sync::{Arc},
-};
-
+use std::{env, net::IpAddr, sync::Arc};
 
 mod app;
 mod args;
-mod utils;
 mod handler;
+mod utils;
 
 use app::*;
-use config::{Connectable};
-
-
+use config::Connectable;
 
 #[macro_use]
 extern crate lazy_static;
@@ -58,7 +47,12 @@ async fn main() {
 
     info!("Starting");
 
-    start_service(&handler::CONFIG.http.www, &handler::CONFIG.http.ip, handler::CONFIG.http.port).await;
+    start_service(
+        &handler::CONFIG.http.www,
+        &handler::CONFIG.http.ip,
+        handler::CONFIG.http.port,
+    )
+    .await;
 }
 
 async fn create_app(www: &str, amqp: &str) -> Arc<App> {

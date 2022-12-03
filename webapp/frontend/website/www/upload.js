@@ -9,6 +9,7 @@ const API_URL = window
         .indexOf('/', 8));
 
 Dropzone.autoDiscover = false;
+Dropzone.parallelUploads = 5;
 
 const drop = new Dropzone("#dropzone", {
     url: API_URL + '/api/upload',

@@ -1,16 +1,12 @@
 use bytes::BufMut;
 use clap::Parser;
 use futures::TryStreamExt;
-use log::{debug};
+use log::debug;
 use once_cell::sync::OnceCell;
 
 use serde_json::json;
 
-use std::{
-    collections::HashMap,
-    path::Path,
-    sync::{Arc},
-};
+use std::{collections::HashMap, path::Path, sync::Arc};
 use warp::{
     filters::cookie,
     http::{Response, StatusCode},
@@ -22,9 +18,9 @@ use crate::args;
 use crate::utils;
 use crate::App;
 
-use config::{WebserverConfig};
+use config::WebserverConfig;
 
-use protocol::rabbit::*;
+use protocol::{rabbit::*, validation::*};
 
 pub static APP: OnceCell<Arc<App>> = OnceCell::new();
 
@@ -57,7 +53,9 @@ fn get_app() -> Arc<App> {
 }
 
 #[allow(opaque_hidden_inferred_bound)]
-pub fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn get_routes(
+    www: &'static str,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let static_files = warp::fs::dir(www);
 
     macro_rules! bad_request {
@@ -190,6 +188,10 @@ pub fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error 
                 return bad_request!();
             };
 
+            if !validate_username(&username) {
+                return bad_request!();
+            }
+            
             let username = username.to_string();
             let login_req = LoginRequestData { username, password };
 
@@ -237,12 +239,14 @@ pub fn get_routes(www: &'static str) -> impl Filter<Extract = impl Reply, Error 
             } else {
                 return bad_request!();
             };
+            if !(validate_username(&username)
+                && validate_email(&email)) {
+                return bad_request!();
+            }
 
-            let register_req = RegisterRequestData {
-                mail: email.to_string(),
-                username: username.to_string(),
-                password: password,
-            };
+            let username = username.to_string();
+            let mail = email.to_string();
+            let register_req = RegisterRequestData { mail, username, password };
 
             let app = get_app();
 

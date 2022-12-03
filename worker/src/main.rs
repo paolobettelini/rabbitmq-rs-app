@@ -107,7 +107,6 @@ async fn main() {
                     let app: &App = &APP.get().unwrap().clone();
                     
                     // Publish answer to `reply_to` queue
-                    println!("Responding");
                     app.publish(
                         reply_queue.as_str(),
                         &answer
