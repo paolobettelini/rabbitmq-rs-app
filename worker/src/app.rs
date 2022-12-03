@@ -2,6 +2,7 @@ use log::{info};
 
 use database::db::Database;
 use image::{imageops::FilterType, ImageFormat};
+use std::sync::Arc;
 use messaging::mb::*;
 use protocol::{
     rabbit::{RabbitMessage::*, *},
@@ -16,51 +17,49 @@ const HEIGHT: u32 = 200;
 const FORMAT: ImageFormat = ImageFormat::Png;
 
 pub struct App {
-    amqp: Rabbit,
-    db_connection_url: String,
+    amqp: Arc<Rabbit>,
+    database: Arc<Database>,
 }
 
 impl App {
     pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
-        let amqp = Rabbit::new(mb_connection_url).await;
+        let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
+        let database = Arc::new(Database::new(db_connection_url));
 
         App {
             amqp,
-            db_connection_url,
+            database,
         }
     }
 
     pub async fn start(&self) {
         info!("Starting consumer");
-
-        let consumer = AppLogic::new(self.db_connection_url.clone()).await;
         
-        self.amqp
-        .consume_messages("queue", "consumer", consumer)
-        .await
-        .unwrap();
-        
-        /*
-        let consumer = Arc::new(consumer);
-        let n_workers = 42;
-        let n_jobs = 23;
-        let pool = ThreadPool::new(n_workers);
+        let mut futs = vec![];
 
-        let amqp = Arc::new(&self.amqp);
+        for i in 0..num_cpus::get() {
+            let amqp = self.amqp.clone();
+            let database = self.database.clone();
 
-        for _ in 0..n_jobs {
-            pool.execute( move || {
+            futs.push(async move {
+                println!("Running thread {}", i);
+                
+                let consumer = AppLogic::new(database.clone());
+
                 amqp
-                    .consume_messages("queue", "consumer", consumer);
-                    //.await
-                    //.unwrap();
+                    .consume_messages("queue", "consumer", consumer)
+                    .await
+                    .unwrap();
             });
-        }*/
+        }
+
+        futures::future::join_all(futs).await;
     }
 }
 
+#[derive(Clone)]
 struct AppLogic {
-    database: Database,
+    database: Arc<Database>,
 }
 
 impl MessageConsumer for AppLogic {
@@ -91,9 +90,7 @@ impl MessageConsumer for AppLogic {
 }
 
 impl AppLogic {
-    pub async fn new(db_connection_url: String) -> Self {
-        let database = Database::new(db_connection_url);
-
+    pub fn new(database: Arc<Database>) -> Self {
         info!("Running embedded migrations");
         database.run_embedded_migrations();
 
