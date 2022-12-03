@@ -17,27 +17,42 @@ const HEIGHT: u32 = 200;
 const FORMAT: ImageFormat = ImageFormat::Png;
 
 pub struct App {
-    amqp: Arc<Rabbit>,
-    database: Arc<Database>,
+    amqp: Rabbit,
+    db_connection_url: String,
+    //database: Database,
+    //amqp: Arc<Rabbit>,
+    //database: Arc<Database>,
 }
 
 impl App {
     pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
-        let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
-        let database = Arc::new(Database::new(db_connection_url));
-
-        info!("Running embedded migrations");
-        database.run_embedded_migrations();
+        let amqp = Rabbit::new(mb_connection_url).await;
+        //let database = Database::new(db_connection_url);
+        //let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
+        //let database = Arc::new(Database::new(db_connection_url));
 
         App {
             amqp,
-            database,
+            db_connection_url,
         }
     }
 
     pub async fn start(&self) {
         info!("Starting consumer");
         
+        let database = Database::new(self.db_connection_url.clone());
+
+        info!("Running embedded migrations");
+        database.run_embedded_migrations();
+        
+        let consumer = AppLogic::new(database);
+        
+        self.amqp
+            .consume_messages("queue", "consumer", consumer)
+            .await
+            .unwrap();
+
+        /*
         let mut futs = vec![];
 
         let cpus = num_cpus::get();
@@ -60,13 +75,14 @@ impl App {
             });
         }
 
-        futures::future::join_all(futs).await;
+        futures::future::join_all(futs).await;*/
     }
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 struct AppLogic {
-    database: Arc<Database>,
+    database: Database,
+    //database: Arc<Database>,
 }
 
 impl MessageConsumer for AppLogic {
@@ -97,7 +113,8 @@ impl MessageConsumer for AppLogic {
 }
 
 impl AppLogic {
-    pub fn new(database: Arc<Database>) -> Self {
+    //pub fn new(database: Arc<Database>) -> Self {
+    pub fn new(database: Database) -> Self {
         AppLogic { database }
     }
 

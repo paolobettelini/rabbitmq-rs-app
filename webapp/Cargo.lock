@@ -139,9 +139,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0da5b41ee986eed3f524c380e6d64965aea573882a8907682ad100f7859305ca"
+checksum = "f1b6f5d7df27bd294849f8eec66ecfc63d11814df7a4f5d74168a2394467b776"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -1292,6 +1292,7 @@ name = "messaging"
 version = "0.1.0"
 dependencies = [
  "amq-protocol-types",
+ "async-global-executor",
  "deadpool",
  "deadpool-lapin",
  "futures",
@@ -1299,7 +1300,6 @@ dependencies = [
  "threadpool",
  "tokio",
  "tokio-amqp",
- "uuid 1.2.1",
 ]
 
 [[package]]
@@ -2614,19 +2614,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
 dependencies = [
  "getrandom",
- "rand",
- "uuid-macro-internal",
-]
-
-[[package]]
-name = "uuid-macro-internal"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44cc305b0c375fa2f078537bbe564516cb1946c1defa4041aa0e3f9cd5e07c4a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

@@ -12,3 +12,4 @@ deadpool = "0.9.5" # lapin connection pool
 deadpool-lapin = "0.10.0"
 futures = { version = "0.3.17", default-features = true }
 threadpool = "1.8.1" # thread pool
+async-global-executor = "2.3.1"
