@@ -7,10 +7,11 @@ pub fn validate_email(value: &str) -> bool {
 }
 
 pub fn validate_password(value: &str) -> bool {
-    //let regex = regex!(r"^(?=.*[A-Za-z])(?=.*\d).{8,}$");
+    let regex1 = regex!(r"\d+");
+    let regex2 = regex!(r"[A-Za-z]+");
+    let regex3 = regex!(r"^.{8,}$");
 
-    //regex.is_match(value)
-    false
+    regex1.is_match(value) && regex2.is_match(value) && regex3.is_match(value)
 }
 
 pub fn validate_username(value: &str) -> bool {

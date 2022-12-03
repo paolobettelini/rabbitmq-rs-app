@@ -33,5 +33,10 @@ features = [
   "WebSocket",
 ]
 
+# Optimizations
+
 [profile.release]
-opt-level = "s"
+opt-level = 'z'
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz"]

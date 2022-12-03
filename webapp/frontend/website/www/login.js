@@ -1,6 +1,6 @@
 "use strict";
 
-import { hash } from 'frontend'
+import { hash, validate_username, validate_password } from 'frontend'
 
 /* Input elements */
 var username_field = document.getElementById('username-temp');
@@ -20,10 +20,9 @@ let usernameValid = false;
 let passValid = false;
 
 username_field.oninput = () => {
-    let regex = /^[a-zA-Z0-9._]{4,20}$/;
     let username = username_field.value;
 
-    if (usernameValid = username.match(regex)) {
+    if (usernameValid = validate_username(username)) {
         username_status.style.color = 'green';
         username_status.innerHTML = 'Username valid';
     } else {
@@ -35,10 +34,9 @@ username_field.oninput = () => {
 }
 
 password_field.oninput = () => {
-    let regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
     let password = password_field.value;
 
-    if (passValid = password.match(regex)) {
+    if (passValid = validate_password(password)) {
         password_status.style.color = 'green';
         password_status.innerHTML = 'Password valid';
     } else {

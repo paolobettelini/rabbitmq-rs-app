@@ -1,8 +1,6 @@
 extern crate protocol;
 
-
-
-/* not worky :(
+/*
 macro_rules! declare_packets {
     (
         $(

@@ -1,6 +1,6 @@
 "use strict";
 
-import { hash } from 'frontend'
+import { hash, validate_username, validate_password, validate_email } from 'frontend'
 
 /* Input elements */
 var username_field = document.getElementById('username-temp');
@@ -27,10 +27,9 @@ let pass1Valid = false;
 let pass2Valid = false;
 
 username_field.oninput = () => {
-    let regex = /^[a-zA-Z0-9._]{4,20}$/;
     let username = username_field.value;
 
-    if (usernameValid = username.match(regex)) {
+    if (usernameValid = validate_username(username)) {
         username_status.style.color = 'green';
         username_status.innerHTML = 'Username valid';
     } else {
@@ -42,10 +41,9 @@ username_field.oninput = () => {
 }
 
 email_field.oninput = () => {
-    let regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     let email = email_field.value;
 
-    if (emailValid = email.match(regex)) {
+    if (emailValid = validate_email(email)) {
         email_status.style.color = 'green';
         email_status.innerHTML = 'Email valid';
     } else {
@@ -57,15 +55,23 @@ email_field.oninput = () => {
 }
 
 password1_field.oninput = () => {
-    let regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-    let password = password1_field.value;
+    let password1 = password1_field.value;
+    let password2 = password2_field.value;
 
-    if (pass1Valid = password.match(regex)) {
+    if (pass1Valid = validate_password(password1)) {
         password1_status.style.color = 'green';
         password1_status.innerHTML = 'Password valid';
     } else {
         password1_status.style.color = 'red';
-        password1_status.innerHTML = password == '' ? '* Required' : 'Invalid password: ^(?=.*[A-Za-z])(?=.*\\d).{8,}$';
+        password1_status.innerHTML = password1 == '' ? '* Required' : 'Invalid password: ^(?=.*[A-Za-z])(?=.*\\d).{8,}$';
+    }
+
+    if (pass2Valid = password1 == password2) {
+        password2_status.style.color = 'green';
+        password2_status.innerHTML = 'Password matches';
+    } else {
+        password2_status.style.color = 'red';
+        password2_status.innerHTML = password2 == '' ? '* Required' : 'Passwords do not match';
     }
 
     checkAll();

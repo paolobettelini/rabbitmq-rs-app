@@ -3,7 +3,7 @@
 #
 # DATABASE_URL="mysql://worker:root@192.168.1.10:3306/service"
 [database]
-address = "192.168.1.10"
+address = "192.168.56.10"
 port = 3306
 username = "worker"
 password = "root"
@@ -14,7 +14,7 @@ name = "service"
 #
 # AMQP_URL=
 [rabbit]
-address = "192.168.1.11"
+address = "192.168.56.11"
 port = 5672
 username = "worker"
 password = "root"

@@ -2,6 +2,7 @@ use wasm_bindgen::{prelude::*};
 
 mod utils;
 use utils::*;
+use protocol::validation;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
@@ -14,4 +15,19 @@ pub fn hash(value: String) -> String {
     let digest = sha256(&data);
 
     to_base64(digest)
+}
+
+#[wasm_bindgen]
+pub fn validate_email(value: String) -> bool {
+    validation::validate_email(&value)
+}
+
+#[wasm_bindgen]
+pub fn validate_password(value: String) -> bool {
+    validation::validate_password(&value)
+}
+
+#[wasm_bindgen]
+pub fn validate_username(value: String) -> bool {
+    validation::validate_username(&value)
 }
