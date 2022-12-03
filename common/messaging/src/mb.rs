@@ -1,6 +1,9 @@
 use deadpool_lapin::{Manager, Pool, PoolError};
 pub use lapin::message::Delivery;
-use lapin::{options::*, publisher_confirm::PublisherConfirm, types::FieldTable, message::DeliveryResult, *};
+pub use lapin::message::DeliveryResult;
+pub use lapin::ConsumerDelegate;
+pub use lapin::options::BasicAckOptions;
+use lapin::{options::*, publisher_confirm::PublisherConfirm, types::FieldTable, *};
 use std::error::Error;
 use tokio_amqp::*;
 
@@ -31,15 +34,21 @@ pub struct Rabbit {
 
 impl Rabbit {
     pub async fn new(url: String) -> Self {
+        let pool = Self::create_pool(url);
+
+        Self { pool }
+    }
+    
+    fn create_pool(url: String) -> Pool {
         let options = ConnectionProperties::default().with_tokio();
         let manager = Manager::new(url, options);
-
+    
         let pool: Pool = deadpool::managed::Pool::builder(manager)
             .max_size(10)
             .build()
             .unwrap();
 
-        Self { pool }
+        pool
     }
 
     pub async fn publish(
@@ -123,12 +132,12 @@ impl Rabbit {
         //Ok(pub_confirm)
     }
 
-    pub async fn consume_messages<F: MessageConsumer>(
+    pub async fn consume_messages<D: lapin::ConsumerDelegate + 'static>(
         &self,
         queue_name: &str,
         consumer_name: &str,
-        consumer: F,
-    ) -> std::result::Result<(), Box<dyn Error>> { 
+        delegate: D,
+    ) {
         let connection = get_rmq_con(self.pool.clone()).await.unwrap();
         let channel = connection.create_channel().await.unwrap();
         
@@ -140,7 +149,7 @@ impl Rabbit {
             )
             .await.unwrap();
         
-        let mut message_consumer = channel
+        let message_consumer = channel
             .basic_consume(
                 queue_name,
                 consumer_name,
@@ -149,51 +158,7 @@ impl Rabbit {
             )
             .await.unwrap();
 
-        let consumer = Arc::new(consumer);
-
-        let task1 = async_global_executor::block_on(async move {
-            while let Some(delivery) = message_consumer.next().await {
-                if let Ok(delivery) = delivery {
-                    // Heavy lifting
-                    let answer = consumer.consume(&delivery);
-                    
-                    let properties = &delivery.properties;
-                    
-                    if let Some(reply_queue) = properties.reply_to() {
-                        if let Some(answer) = answer {
-                            // Publish answer to `reply_to` queue
-                            let exchange = "";
-                            let _pub_confirm = channel
-                            .basic_publish(
-                                exchange,
-                                reply_queue.as_str(),
-                                BasicPublishOptions::default(),
-                                &answer,
-                                BasicProperties::default(),
-                            )
-                            .await.unwrap();
-                        }
-                    }
-                    
-                    delivery.ack(BasicAckOptions::default()).await.unwrap();
-                }
-            }
-        });
-
-
-            /*
-        message_consumer.set_delegate(move |delivery: DeliveryResult|  async move {
-            if let Ok(Some(delivery)) = delivery {
-                std::thread::sleep(std::time::Duration::from_millis(2000));
-
-                delivery
-                    .ack(BasicAckOptions::default())
-                    .await
-                    .unwrap();
-            }
-        });
-
-        std::thread::sleep(std::time::Duration::from_millis(200000));*/
+        message_consumer.set_delegate(delegate);
 
         /*
         while let Some(delivery) = message_consumer.next().await {
@@ -225,8 +190,6 @@ impl Rabbit {
                     .await.unwrap();
             }
         }*/
-
-        Ok(())
     }
 }
 

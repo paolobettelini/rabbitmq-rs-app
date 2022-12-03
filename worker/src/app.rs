@@ -16,16 +16,17 @@ const WIDTH: u32 = 200;
 const HEIGHT: u32 = 200;
 const FORMAT: ImageFormat = ImageFormat::Png;
 
+#[derive(Debug)]
 pub struct App {
     amqp: Rabbit,
-    db_connection_url: String,
+    //db_connection_url: String,
     //database: Database,
     //amqp: Arc<Rabbit>,
     //database: Arc<Database>,
 }
 
 impl App {
-    pub async fn new(db_connection_url: String, mb_connection_url: String) -> Self {
+    pub async fn new(mb_connection_url: String) -> Self {
         let amqp = Rabbit::new(mb_connection_url).await;
         //let database = Database::new(db_connection_url);
         //let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
@@ -33,54 +34,34 @@ impl App {
 
         App {
             amqp,
-            db_connection_url,
+            //db_connection_url,
         }
     }
 
-    pub async fn start(&self) {
-        info!("Starting consumer");
-        
-        let database = Database::new(self.db_connection_url.clone());
+    pub fn create_db_consumer(db_connection_url: String) -> AppLogic {
+        let database = Database::new(db_connection_url);
 
         info!("Running embedded migrations");
         database.run_embedded_migrations();
         
         let consumer = AppLogic::new(database);
-        
+
+        consumer
+    }
+
+    pub async fn start<D: ConsumerDelegate + 'static>(&self, delegate: D) {
         self.amqp
-            .consume_messages("queue", "consumer", consumer)
-            .await
-            .unwrap();
+            .consume_messages("queue", "consumer", delegate)
+            .await;
+    }
 
-        /*
-        let mut futs = vec![];
-
-        let cpus = num_cpus::get();
-        info!("Starting {} worker threads", cpus);
-
-        for i in 0..cpus {
-            let amqp = self.amqp.clone();
-            let database = self.database.clone();
-
-            futs.push(async move {                
-                let consumer = AppLogic::new(database.clone());
-
-                let queue_name = "queue";
-                let consumer_name = Uuid::new_v4().to_string();
-
-                amqp
-                    .consume_messages(queue_name, &consumer_name, consumer)
-                    .await
-                    .unwrap();
-            });
-        }
-
-        futures::future::join_all(futs).await;*/
+    pub async fn publish(&self, queue_name: &str, payload: &[u8]) {
+        self.amqp.publish(queue_name, payload).await;
     }
 }
 
 //#[derive(Clone)]
-struct AppLogic {
+pub struct AppLogic {
     database: Database,
     //database: Arc<Database>,
 }
