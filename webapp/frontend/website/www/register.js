@@ -98,7 +98,7 @@ function checkAll() {
 
 submit_btn.onclick = () => {
     username_form.value = username_field.value;
-    password_form.value = hash(password1_field.value);
+    password_form.value = hash(username_field.value + password1_field.value);
     email_form.value = email_field.value;
     form.submit();
 }

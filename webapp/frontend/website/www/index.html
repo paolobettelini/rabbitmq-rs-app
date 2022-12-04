@@ -6,6 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style/style.css">
     <title>Progetto</title>
+
+    <style>
+        .wrapper {
+            border: 2px solid;
+            text-align: center;
+            margin: auto;
+            width: 50%;
+            padding: 10px;
+        }
+
+        .buttonlink {
+            background: #f5ba1a;
+            padding: 2px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            text-decoration: none;
+            margin-bottom: 10px;
+            -webkit-transition: all 0.3s ease-in-out;
+            -moz-transition: all 0.3s ease-in-out;
+            -ms-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .buttonlink:focus {
+            background: #e1a70a;
+        }
+        .buttonlink:hover {
+            background: #e1a70a;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -24,6 +56,24 @@
 
     <br><br><br>
 
-    <h1>Welcome</h1>
+    <div class="wrapper">
+        <h1>Welcome</h1>
+
+        <br>
+
+        <p>Here you can upload images</p>
+
+        <br>
+
+        <p>
+            {% if token %}
+                Go to your <a class="buttonlink" href="/gallery">gallery</a>
+                or upload an image
+            {% else %}
+                <a class="buttonlink" href="/login">Login</a> or <a class="buttonlink" href="/register">Register</a>
+                if you haven't already
+            {% endif %}
+        </p>
+    </div>
 </body>
 </html>
