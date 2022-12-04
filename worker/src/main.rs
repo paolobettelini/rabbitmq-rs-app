@@ -124,7 +124,8 @@ async fn main() {
 
     APP.get().unwrap().clone().start(delegate).await;
 
+    // Keep the program alive
     loop {
-        std::thread::sleep(std::time::Duration::from_millis(200000));
+        std::thread::sleep(std::time::Duration::from_secs(60 * 10));
     }
 }
