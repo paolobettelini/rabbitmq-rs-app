@@ -30,7 +30,7 @@ let imageContainer = document.getElementById('images');
 let loadMoreButton = document.getElementById('load-more-button');
 let imgCounter = document.getElementById('img-counter');
 
-const CHUNK = 5;
+const CHUNK = 6;
 
 let queue = []; // Images queue
 
