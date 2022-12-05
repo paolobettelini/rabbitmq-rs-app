@@ -30,10 +30,10 @@ impl Database {
         self.pool.get().unwrap()
     }
 
-    pub fn create_user(&self, mail: &str, username: &str, password: &Vec<u8>, token: &Vec<u8>) {
+    pub fn create_user(&self, mail: &str, username: &str, password: &Vec<u8>, token: &Vec<u8>) -> bool {
         let new_user = NewUser { mail, username, password, token};
 
-        users::create_user(&mut self.get_connection(), new_user);
+        users::create_user(&mut self.get_connection(), new_user)
     }
 
     pub fn user_exists(&self, username: &str) -> bool {
@@ -60,15 +60,17 @@ impl Database {
         users::get_user_id(&mut self.get_connection(), username)
     }
 
-    pub fn insert_image(&self, username: &str, data: &Vec<u8>) {
+    pub fn insert_image(&self, username: &str, data: &Vec<u8>) -> bool {
         if let Some(user_id) = self.get_user_id(&username) {
             let total_images = self.get_total_images(username) as i32;
             let id = total_images + 1;
             
             let new_image = NewImage { id, user_id, data };
 
-            images::insert_image(&mut self.get_connection(), &username, new_image);
+            return images::insert_image(&mut self.get_connection(), &username, new_image);
         }
+
+        false
     }
 
     pub fn get_image(&self, username: &str, index: i32) -> Option<Image> {
@@ -79,10 +81,10 @@ impl Database {
         images::get_total_images(&mut self.get_connection(), username)
     }
 
-    pub fn insert_log(&self, message: &str) {
+    pub fn insert_log(&self, message: &str) -> bool {
         let new_log = NewLog { message };
 
-        logs::insert_log(&mut self.get_connection(), new_log);
+        logs::insert_log(&mut self.get_connection(), new_log)
     }
 
     pub fn run_embedded_migrations(&self) {

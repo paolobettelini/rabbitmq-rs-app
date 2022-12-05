@@ -1,13 +1,13 @@
 use crate::models::{NewImage, Image};
 use diesel::prelude::*;
 
-pub fn insert_image(connection: &mut MysqlConnection, _username: &str, new_image: NewImage) {
+pub fn insert_image(connection: &mut MysqlConnection, _username: &str, new_image: NewImage) -> bool {
     use crate::schema::image::dsl::*;
 
     diesel::insert_into(image)
         .values(&new_image)
         .execute(connection)
-        .expect("Error saving new image");
+        .is_ok()
 }
 
 pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
@@ -33,7 +33,6 @@ pub fn get_total_images(connection: &mut MysqlConnection, name: &str) -> u32 {
 pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Option<Image> {
     use crate::schema::image::{id as image_id, user_id as user_id_image, dsl::image};
     use crate::schema::user::{id as user_id_user, username, dsl::user};
-    
 
     let id_to_filter: i32 = {
         let result = user
@@ -48,13 +47,8 @@ pub fn get_image(connection: &mut MysqlConnection, name: &str, index: i32) -> Op
         }
     };
 
-    let result: Result<Image, _> = image
+    image
         .filter(user_id_image.eq(id_to_filter).and(image_id.eq(index)))
-        .first(connection);
-
-    if let Ok(bytes) = result {
-        Some(bytes)
-    } else {
-        return None;
-    }
+        .first::<Image>(connection)
+        .ok()
 }
