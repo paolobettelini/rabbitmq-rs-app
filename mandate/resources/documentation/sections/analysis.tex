@@ -146,4 +146,38 @@
 \end{center}
 \egroup{}
 
+\pagebreak
+
+\subsection{Use Cases}
+
+The user can log in only if it has registered. Once logged the user has access
+to the application features:
+\begin{itemize}
+    \item \textbf{Logout} (Logout)
+    \item \textbf{Upload} (Upload an image)
+    \item \textbf{Image} (Retrieve an image)
+\end{itemize}
+
+\begin{tikzpicture}
+    \begin{umlsystem}[x=6] {} % empty title
+        \umlusecase[x=1, name=login, width=2cm] {Login}
+        \umlusecase[x=1, y=-5, name=register, width=2cm] {Register}
+        \umlusecase[x=8, name=logout, width=2cm] {Logout}
+        \umlusecase[x=8, y=-2,name=upload, width=2cm] {Upload}
+        \umlusecase[x=8, y=-5, name=image, width=2cm] {Image}
+    \end{umlsystem}
+    \node [above] at (current bounding box.north) {Application};
+
+    \umlactor[y=-2] {Actor}
+
+    \umlassoc{Actor}{login}
+    \umlassoc{Actor}{register}
+
+    \draw [tikzuml dependency style] (login) -- node[above] {\(\ll extends \gg\)} (logout);
+    \draw [tikzuml dependency style] (login) -- node[above] {\(\ll extends \gg\)} (upload);
+    \draw [tikzuml dependency style] (login) -- node[above] {\(\ll extends \gg\)} (image);
+
+    \draw [tikzuml dependency style] (login) -- node[left] {\(\ll includes \gg\)} (register);
+\end{tikzpicture}
+
 \end{document}
