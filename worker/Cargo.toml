@@ -10,6 +10,7 @@ log = "0.4"
 env_logger = "0.9.0"
 sha2 = "0.10.5"
 image = "0.24.5"
+webp = "0.2.2"
 #threadpool = "1.8.1" # thread pool
 # needed?
 futures = { version = "0.3.17", default-features = true }

@@ -1,7 +1,7 @@
 use log::info;
 
 use database::db::Database;
-use image::{imageops::FilterType, ImageFormat};
+use image::{imageops::FilterType, ImageFormat, EncodableLayout};
 use messaging::mb::*;
 use once_cell::sync::OnceCell;
 use protocol::{
@@ -10,12 +10,12 @@ use protocol::{
 };
 use std::sync::Arc;
 use uuid::Uuid;
+use webp::{Encoder, PixelLayout, WebPImage, WebPMemory};
 
 mod utils;
 
 const WIDTH: u32 = 200;
 const HEIGHT: u32 = 200;
-const FORMAT: ImageFormat = ImageFormat::Png;
 
 #[derive(Debug)]
 pub struct App {
@@ -166,13 +166,24 @@ impl AppLogic {
                 // Heavy lifting ~ order of seconds
                 let image = image.resize(WIDTH, HEIGHT, FilterType::Lanczos3);
 
+                println!("SIZE: {} {}", &image.width(), &image.height());
+                
                 // Convert to WebP
-                let bytes = utils::image_to_format(image, FORMAT);
+                let encoder: Encoder = Encoder::from_image(&image).unwrap();
+                let bytes = encoder.encode(65f32).as_bytes().to_vec();
 
                 // Save to database
-                self.database.insert_image(&username, &bytes);
+                let saved = self.database.insert_image(&username, &bytes);
 
-                ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
+                ShrinkAndUploadResponse(
+                    if !saved {
+                        ShrinkAndUploadResponseData::Err(
+                            ShrinkAndUploadResponseDataErr::InvalidImage,
+                        )                  
+                    } else {
+                        ShrinkAndUploadResponseData::Ok
+                    }
+                )
             } else {
                 ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Err(
                     ShrinkAndUploadResponseDataErr::InvalidImage,
