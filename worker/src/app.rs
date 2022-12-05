@@ -1,7 +1,7 @@
 use log::info;
 
 use database::db::Database;
-use image::{imageops::FilterType, ImageFormat, EncodableLayout};
+use image::{imageops::FilterType, EncodableLayout, ImageFormat};
 use messaging::mb::*;
 use once_cell::sync::OnceCell;
 use protocol::{
@@ -166,24 +166,27 @@ impl AppLogic {
                 // Heavy lifting ~ order of seconds
                 let image = image.resize(WIDTH, HEIGHT, FilterType::Lanczos3);
 
-                println!("SIZE: {} {}", &image.width(), &image.height());
-                
                 // Convert to WebP
-                let encoder: Encoder = Encoder::from_image(&image).unwrap();
+                let encoder: Encoder = {
+                    let result = Encoder::from_image(&image);
+                    if let Ok(encoder) = result {
+                        encoder
+                    } else {
+                        return ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Err(
+                            ShrinkAndUploadResponseDataErr::InvalidImage,
+                        ));
+                    }
+                };
                 let bytes = encoder.encode(65f32).as_bytes().to_vec();
 
                 // Save to database
                 let saved = self.database.insert_image(&username, &bytes);
 
-                ShrinkAndUploadResponse(
-                    if !saved {
-                        ShrinkAndUploadResponseData::Err(
-                            ShrinkAndUploadResponseDataErr::InvalidImage,
-                        )                  
-                    } else {
-                        ShrinkAndUploadResponseData::Ok
-                    }
-                )
+                ShrinkAndUploadResponse(if !saved {
+                    ShrinkAndUploadResponseData::Err(ShrinkAndUploadResponseDataErr::InvalidImage)
+                } else {
+                    ShrinkAndUploadResponseData::Ok
+                })
             } else {
                 ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Err(
                     ShrinkAndUploadResponseDataErr::InvalidImage,
