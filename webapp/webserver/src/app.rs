@@ -166,10 +166,7 @@ impl App {
         }
     }
 
-    pub async fn send_upload_request(
-        &self,
-        data: ShrinkAndUploadData,
-    ) -> ShrinkAndUploadResponseData {
+    pub async fn send_upload_request(&self, data: ShrinkAndUploadData) -> &str {
         let message = RabbitMessage::ShrinkAndUpload(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
@@ -182,19 +179,24 @@ impl App {
             let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
 
             if let ShrinkAndUploadResponse(data) = res {
-                data
+                match data {
+                    ShrinkAndUploadResponseData::Ok => "Ok",
+                    ShrinkAndUploadResponseData::Err(v) => match v {
+                        ShrinkAndUploadResponseDataErr::InvalidImage => "Invalid image",
+                        ShrinkAndUploadResponseDataErr::AuthenticationRequired => {
+                            "Authentication Required"
+                        }
+                    },
+                }
             } else {
-                ShrinkAndUploadResponseData::InvalidImage
+                "Invalid server response"
             }
         } else {
-            ShrinkAndUploadResponseData::InvalidImage
+            "Invalid server response"
         }
     }
 
-    pub async fn send_total_images_request(
-        &self,
-        data: GetTotalImagesData,
-    ) -> GetTotalImagesResponseData {
+    pub async fn send_total_images_request(&self, data: GetTotalImagesData) -> String {
         let message = RabbitMessage::GetTotalImages(data);
         let payload = message.raw_bytes(&Settings::default()).unwrap();
 
@@ -207,12 +209,19 @@ impl App {
             let res = RabbitMessage::from_raw_bytes(&data, &Settings::default()).unwrap();
 
             if let GetTotalImagesResponse(data) = res {
-                data
+                match data {
+                    GetTotalImagesResponseData::Ok(v) => v.amount.to_string(),
+                    GetTotalImagesResponseData::Err(v) => match v {
+                        GetTotalImagesResponseDataErr::AuthenticationRequired => {
+                            "Authentication Required".to_owned()
+                        }
+                    },
+                }
             } else {
-                GetTotalImagesResponseData { amount: 0 }
+                "Invalid server response".to_owned()
             }
         } else {
-            GetTotalImagesResponseData { amount: 0 }
+            "Invalid server response".to_owned()
         }
     }
 

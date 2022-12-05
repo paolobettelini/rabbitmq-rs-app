@@ -6,11 +6,11 @@ use std::{env, path::Path};
 mod app;
 mod args;
 
+use app::*;
+use config::{Connectable, WorkerConfig};
 use messaging::mb::*;
 use once_cell::sync::OnceCell;
-use app::*;
 use std::{future::Future, sync::Arc};
-use config::{Connectable, WorkerConfig};
 
 #[macro_use]
 extern crate lazy_static;
@@ -39,7 +39,7 @@ lazy_static! {
 
     pub static ref APP: OnceCell<Arc<App>> = OnceCell::new();
 
-    pub static ref CONSUMER: AppLogic = {
+    pub static ref CONSUMER: Arc<AppLogic> = {
         // Read database configuration
         let db_connection_url = if let Some(db) = &CONFIG.database {
             db.get_connection_string()
@@ -56,7 +56,7 @@ lazy_static! {
 
         let consumer = App::create_db_consumer(db_connection_url);
 
-        consumer
+        Arc::new(consumer)
     };
 }
 
@@ -75,7 +75,6 @@ async fn main() {
 
     info!("Starting");
 
-    
     // Create App
     let app = {
         // Read AMQP configuration
@@ -85,7 +84,9 @@ async fn main() {
             if let Ok(var) = env::var("AMQP_URL") {
                 var
             } else {
-                error!("No AMQP connection found in configuration file. You can also set DATABASE_URL");
+                error!(
+                    "No AMQP connection found in configuration file. You can also set DATABASE_URL"
+                );
                 std::process::exit(1);
             }
         };
@@ -101,24 +102,18 @@ async fn main() {
             let answer = CONSUMER.consume(&delivery);
 
             let properties = &delivery.properties;
-            
+
             if let Some(reply_queue) = properties.reply_to() {
                 if let Some(answer) = answer {
                     let app: &App = &APP.get().unwrap().clone();
-                    
+
                     // Publish answer to `reply_to` queue
-                    app.publish(
-                        reply_queue.as_str(),
-                        &answer
-                    ).await;
+                    app.publish(reply_queue.as_str(), &answer).await;
                 }
             }
-            
+
             // Ack the message
-            let _ = &delivery
-                .ack(BasicAckOptions::default())
-                .await
-                .unwrap();
+            let _ = &delivery.ack(BasicAckOptions::default()).await.unwrap();
         }
     };
 

@@ -1,21 +1,5 @@
 extern crate protocol;
 
-/*
-macro_rules! declare_packets {
-    (
-        $(
-            $( #[$meta:meta] )*
-            $vis:vis struct $name:ident $body:block
-        )*
-    ) => {
-        $(
-            #[derive(Protocol, Debug, PartialEq)]
-            #[protocol(discriminant = "integer")]
-            $vis struct $name $block
-        )*
-    };
-}*/
-
 pub type Image = Vec<u8>;
 
 #[derive(Protocol, Debug, PartialEq)]
@@ -31,7 +15,7 @@ pub enum RabbitMessage {
     ShrinkAndUploadResponse(ShrinkAndUploadResponseData),
     GetTotalImages(GetTotalImagesData),
     GetTotalImagesResponse(GetTotalImagesResponseData),
-    ErrorResponse(ErrorResponseData),
+    Log(LogData),
 }
 
 #[derive(Protocol, Debug, PartialEq)]
@@ -111,33 +95,59 @@ pub struct GetTotalImagesData {
 
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
-pub struct GetTotalImagesResponseData {
+pub enum GetTotalImagesResponseData {
+    Ok(GetTotalImagesResponseDataOk),
+    Err(GetTotalImagesResponseDataErr),
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub struct GetTotalImagesResponseDataOk {
     pub amount: u32,
 }
 
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
-pub enum ErrorResponseData {
-    AuthenticationRequired,
-    UnknownUsername,
+pub enum GetTotalImagesResponseDataErr {
+    AuthenticationRequired
 }
 
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub enum ShrinkAndUploadResponseData {
     Ok,
-    InvalidImage
+    Err(ShrinkAndUploadResponseDataErr),
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub enum ShrinkAndUploadResponseDataErr {
+    InvalidImage,
+    AuthenticationRequired,
 }
 
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub enum GetImageResponseData {
     Ok(GetImageResponseDataOk),
-    InvalidIndex
+    Err(GetImageResponseDataErr),
 }
 
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct GetImageResponseDataOk {
     pub data: Vec<u8>
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub enum GetImageResponseDataErr {
+    InvalidIndex,
+    AuthenticationRequired,
+}
+
+#[derive(Protocol, Debug, PartialEq)]
+#[protocol(discriminant = "integer")]
+pub struct LogData {
+    pub message: String
 }

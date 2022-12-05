@@ -1,13 +1,14 @@
-use log::{info};
+use log::info;
 
 use database::db::Database;
 use image::{imageops::FilterType, ImageFormat};
-use std::sync::Arc;
 use messaging::mb::*;
+use once_cell::sync::OnceCell;
 use protocol::{
     rabbit::{RabbitMessage::*, *},
     Parcel, Settings,
 };
+use std::sync::Arc;
 use uuid::Uuid;
 
 mod utils;
@@ -19,23 +20,13 @@ const FORMAT: ImageFormat = ImageFormat::Png;
 #[derive(Debug)]
 pub struct App {
     amqp: Rabbit,
-    //db_connection_url: String,
-    //database: Database,
-    //amqp: Arc<Rabbit>,
-    //database: Arc<Database>,
 }
 
 impl App {
     pub async fn new(mb_connection_url: String) -> Self {
         let amqp = Rabbit::new(mb_connection_url).await;
-        //let database = Database::new(db_connection_url);
-        //let amqp = Arc::new(Rabbit::new(mb_connection_url).await);
-        //let database = Arc::new(Database::new(db_connection_url));
 
-        App {
-            amqp,
-            //db_connection_url,
-        }
+        App { amqp }
     }
 
     pub fn create_db_consumer(db_connection_url: String) -> AppLogic {
@@ -43,7 +34,7 @@ impl App {
 
         info!("Running embedded migrations");
         database.run_embedded_migrations();
-        
+
         let consumer = AppLogic::new(database);
 
         consumer
@@ -60,41 +51,47 @@ impl App {
     }
 }
 
-//#[derive(Clone)]
 pub struct AppLogic {
     database: Database,
-    //database: Arc<Database>,
 }
 
 impl MessageConsumer for AppLogic {
     fn consume(&self, delivery: &Delivery) -> Option<Vec<u8>> {
-        let result = RabbitMessage::from_raw_bytes(&delivery.data, &Settings::default()).unwrap();
-
         info!("Received Delivery");
 
-        let response = match result {
+        // Convert bytes to `RabbitMessage` structure
+        let message = {
+            let settings = &Settings::default();
+            let res = RabbitMessage::from_raw_bytes(&delivery.data, settings);
+            if let Ok(data) = res {
+                data
+            } else {
+                return None;
+            }
+        };
+
+        let response = match message {
             LoginRequest(ref data) => self.on_login_request(&data),
             RegisterRequest(ref data) => self.on_register_request(&data),
             GetImage(ref data) => self.on_get_image(&data),
             ShrinkAndUpload(ref data) => self.on_shrink_and_upload(&data),
             GetTotalImages(ref data) => self.on_get_total_images(&data),
+            Log(ref data) => {
+                // No response for log
+                self.on_log(&data);
+                return None;
+            }
             _ => return None,
         };
 
-        // Return result
-        // println!("Returning {:?}", response);
+        // Convert `RabbitMessage` response to bytes
         let res = response.raw_bytes(&Settings::default());
 
-        if let Ok(res) = res {
-            Some(res)
-        } else {
-            None
-        }
+        res.ok()
     }
 }
 
 impl AppLogic {
-    //pub fn new(database: Arc<Database>) -> Self {
     pub fn new(database: Database) -> Self {
         AppLogic { database }
     }
@@ -103,30 +100,17 @@ impl AppLogic {
         let user = self.database.get_user(&data.username);
 
         match user {
-            None => {
-                let error = RabbitMessage::LoginResponse(LoginResponseData::Err(
-                    LoginResponseDataErr::NotFound,
-                ));
-
-                error
-            }
+            None => LoginResponse(LoginResponseData::Err(LoginResponseDataErr::NotFound)),
             Some(user) => {
                 if user.password != data.password {
-                    let error = RabbitMessage::LoginResponse(LoginResponseData::Err(
+                    return LoginResponse(LoginResponseData::Err(
                         LoginResponseDataErr::WrongPassword,
                     ));
-
-                    return error;
                 }
 
                 let token = self.get_token_for(&data.username);
 
-                let response =
-                    RabbitMessage::LoginResponse(LoginResponseData::Ok(LoginResponseDataOk {
-                        token,
-                    }));
-
-                response
+                LoginResponse(LoginResponseData::Ok(LoginResponseDataOk { token }))
             }
         }
     }
@@ -135,21 +119,17 @@ impl AppLogic {
         let user_exists = self.database.user_exists(&data.username);
 
         if user_exists {
-            let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
+            return RegisterResponse(RegisterResponseData::Err(
                 RegisterResponseDataErr::UsernameAlreadyExists,
             ));
-
-            return error;
         }
 
         let mail_exists = self.database.mail_exists(&data.mail);
 
         if mail_exists {
-            let error = RabbitMessage::RegisterResponse(RegisterResponseData::Err(
+            return RegisterResponse(RegisterResponseData::Err(
                 RegisterResponseDataErr::MailAlreadyExists,
             ));
-
-            return error;
         }
 
         let token = utils::generate_random_token();
@@ -157,26 +137,24 @@ impl AppLogic {
         self.database
             .create_user(&data.mail, &data.username, &data.password, &token);
 
-        let response =
-            RabbitMessage::RegisterResponse(RegisterResponseData::Ok(RegisterResponseDataOk {
-                token,
-            }));
-
-        info!("Register Ok");
-        response
+        RegisterResponse(RegisterResponseData::Ok(RegisterResponseDataOk { token }))
     }
 
     fn on_get_image(&self, data: &GetImageData) -> RabbitMessage {
         if let Some(username) = self.get_username(&data.token) {
             if let Some(image) = self.database.get_image(&username, data.index as i32) {
-                RabbitMessage::GetImageResponse(GetImageResponseData::Ok(GetImageResponseDataOk {
+                GetImageResponse(GetImageResponseData::Ok(GetImageResponseDataOk {
                     data: image.data,
                 }))
             } else {
-                RabbitMessage::GetImageResponse(GetImageResponseData::InvalidIndex)
+                GetImageResponse(GetImageResponseData::Err(
+                    GetImageResponseDataErr::InvalidIndex,
+                ))
             }
         } else {
-            RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired)
+            GetImageResponse(GetImageResponseData::Err(
+                GetImageResponseDataErr::AuthenticationRequired,
+            ))
         }
     }
 
@@ -194,16 +172,16 @@ impl AppLogic {
                 // Save to database
                 self.database.insert_image(&username, &bytes);
 
-                RabbitMessage::ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
+                ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Ok)
             } else {
-                return RabbitMessage::ShrinkAndUploadResponse(
-                    ShrinkAndUploadResponseData::InvalidImage,
-                );
+                ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Err(
+                    ShrinkAndUploadResponseDataErr::InvalidImage,
+                ))
             }
         } else {
-            let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
-
-            error
+            ShrinkAndUploadResponse(ShrinkAndUploadResponseData::Err(
+                ShrinkAndUploadResponseDataErr::AuthenticationRequired,
+            ))
         }
     }
 
@@ -211,23 +189,18 @@ impl AppLogic {
         if let Some(username) = self.get_username(&data.token) {
             let amount = self.database.get_total_images(&username);
 
-            if amount == 0 {
-                let exists = self.database.user_exists(&username);
-
-                if !exists {
-                    return RabbitMessage::ErrorResponse(ErrorResponseData::UnknownUsername);
-                }
-            }
-
-            let response =
-                RabbitMessage::GetTotalImagesResponse(GetTotalImagesResponseData { amount });
-
-            response
+            GetTotalImagesResponse(GetTotalImagesResponseData::Ok(
+                GetTotalImagesResponseDataOk { amount },
+            ))
         } else {
-            let error = RabbitMessage::ErrorResponse(ErrorResponseData::AuthenticationRequired);
-
-            error
+            GetTotalImagesResponse(GetTotalImagesResponseData::Err(
+                GetTotalImagesResponseDataErr::AuthenticationRequired,
+            ))
         }
+    }
+
+    fn on_log(&self, data: &LogData) {
+        self.database.insert_log(&data.message);
     }
 
     fn get_username(&self, token: &Vec<u8>) -> Option<String> {

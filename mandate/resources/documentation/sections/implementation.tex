@@ -369,6 +369,8 @@ themselves.
     }
 \end{lstlisting}
 
+\pagebreak
+
 Queries and inserts are executed using the schema file.
 
 \begin{lstlisting}[language=Rust, style=boxed, numbers=none]
@@ -383,11 +385,12 @@ Queries and inserts are executed using the schema file.
 
 \subsection{Load Balancer}
 
-\subsection{Backend}
-
 \subsection{Messaging}
 
 \subsubsection{RabbitMQ}
+
+The binding to RabbitMQ is done via the \texttt{lapin} crate.
+
 
 % parlare anche degli ack
 
@@ -594,9 +597,55 @@ This method does not require the client to send an acknowledgment for the reply 
 
 \pagebreak
 
-\subsubsection{Binding}
+\subsection{Backend}
 
-The binding to RabbitMQ is done via the \texttt{lapin} crate.
+The backend is a software that endlessly
+consumes messages on every core.
+\\
+The main part of the logic is the action matching.
+When a message is consumed, it is converted into a 
+\texttt{RabbitMessage} struct. The structure is then matched
+and an action is chosen. The generated answer (if any)
+it is converted to bytes and sent back.
+
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    fn consume(&self, delivery: &Delivery) -> Option<Vec<u8>> {
+        info!("Received Delivery");
+
+        // Convert bytes to `RabbitMessage` structure
+        let message = {
+            let settings = &Settings::default();
+            let res = RabbitMessage::from_raw_bytes(&delivery.data, settings);
+            if let Ok(data) = res {
+                data
+            } else {
+                return None;
+            }
+        };
+
+        // Match action
+        let response = match message {
+            LoginRequest(ref data) => self.on_login_request(&data),
+            RegisterRequest(ref data) => self.on_register_request(&data),
+            GetImage(ref data) => self.on_get_image(&data),
+            ShrinkAndUpload(ref data) => self.on_shrink_and_upload(&data),
+            GetTotalImages(ref data) => self.on_get_total_images(&data),
+            Log(ref data) => {
+                // No response for log
+                self.on_log(&data);
+                return None;
+            }
+            _ => return None,
+        };
+
+        // Convert `RabbitMessage` response to bytes
+        let res = response.raw_bytes(&Settings::default());
+
+        res.ok()
+    }
+\end{lstlisting}
+
+\pagebreak
 
 \subsection{Dependencies}
 

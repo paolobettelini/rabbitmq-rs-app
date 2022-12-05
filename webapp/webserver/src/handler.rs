@@ -191,7 +191,7 @@ pub fn get_routes(
             if !validate_username(&username) {
                 return bad_request!();
             }
-            
+
             let username = username.to_string();
             let login_req = LoginRequestData { username, password };
 
@@ -239,14 +239,17 @@ pub fn get_routes(
             } else {
                 return bad_request!();
             };
-            if !(validate_username(&username)
-                && validate_email(&email)) {
+            if !(validate_username(&username) && validate_email(&email)) {
                 return bad_request!();
             }
 
             let username = username.to_string();
             let mail = email.to_string();
-            let register_req = RegisterRequestData { mail, username, password };
+            let register_req = RegisterRequestData {
+                mail,
+                username,
+                password,
+            };
 
             let app = get_app();
 
@@ -360,12 +363,7 @@ pub fn get_routes(
 
                 let response = app.send_upload_request(upload_req).await;
 
-                let status = match response {
-                    ShrinkAndUploadResponseData::Ok => "Ok",
-                    ShrinkAndUploadResponseData::InvalidImage => "Invalid Image",
-                };
-
-                return json_response!(status);
+                return json_response!(response);
             }
 
             json_response!("Invalid Request")
@@ -422,8 +420,7 @@ pub fn get_routes(
 
             let response = app.send_total_images_request(get_request).await;
 
-            let amount = response.amount;
-            return json_response!(amount);
+            return json_response!(response);
         });
 
     let index_block = warp::path::path("index.html")

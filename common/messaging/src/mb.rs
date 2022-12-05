@@ -159,37 +159,6 @@ impl Rabbit {
             .await.unwrap();
 
         message_consumer.set_delegate(delegate);
-
-        /*
-        while let Some(delivery) = message_consumer.next().await {
-            if let Ok(delivery) = delivery {
-                // Heavy lifting
-                let answer = consumer.consume(&delivery);
-                
-                let properties = delivery.properties;
-                
-                if let Some(reply_queue) = properties.reply_to() {
-                    if let Some(answer) = answer {
-                        // Publish answer to `reply_to` queue
-                        let exchange = "";
-                        let _pub_confirm = channel
-                        .basic_publish(
-                            exchange,
-                            reply_queue.as_str(),
-                            BasicPublishOptions::default(),
-                            &answer,
-                            BasicProperties::default(),
-                        )
-                        .await.unwrap();
-                    }
-                }
-                
-                // Ack the message
-                channel
-                    .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
-                    .await.unwrap();
-            }
-        }*/
     }
 }
 
