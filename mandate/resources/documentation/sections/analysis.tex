@@ -23,8 +23,8 @@
         \hline
         \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
         \hline
-        \textbf{Req-00\_0} & The Authentication must be kept alive by a cookie. \\
-        \textbf{Req-00\_1} & The keep-alive cookie must contains a randomly generated token. \\
+        \textbf{Req-00\_0} & The authentication must be kept alive by a cookie. \\
+        \textbf{Req-00\_1} & The keep-alive cookie must contain a randomly generated token. \\
         \textbf{Req-00\_2} & The password must be hashed client-side. \\
         \hline
     \end{tabular}
@@ -50,7 +50,7 @@
         \hline
         \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
         \hline
-        \textbf{Req-01\_0} & During the conversion an async progress status must be display. \\
+        \textbf{Req-01\_0} & During the conversion an async progress status must be displayed. \\
         \hline
     \end{tabular}
 \end{center}
@@ -71,7 +71,8 @@
         \hline
         \textbf{Notes} & none \\
         \hline
-        \textbf{Description} & Every message between WebServer and Worker must be through message queues. \\
+        \textbf{Description} & Every message sent between webserver and backend
+            must be through a message queue on the message broker. \\
         \hline
     \end{tabular}
 \end{center}
@@ -84,7 +85,7 @@
         \hline
         \multicolumn{2}{|c|}{\textbf{Req-03}} \\
         \hline
-        \textbf{Name} & List of images \\
+        \textbf{Name} & Gallery \\
         \hline
         \textbf{Priority} & 1 \\
         \hline
@@ -96,7 +97,7 @@
         \hline
         \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
         \hline
-        \textbf{Req-03\_0} & Only the last N images are loaded. Another chunk of images is loaded if requested by the user. \\
+        \textbf{Req-03\_0} & Only the last \(N\) images are loaded. Another chunk of images is loaded if requested by the user. \\
         \hline
     \end{tabular}
 \end{center}
@@ -113,12 +114,13 @@
         \hline
         \textbf{Priority} & 1 \\
         \hline
-        \textbf{Version} & 1.0 \\
+        \textbf{Version} & 1.1 \\
         \hline
         \textbf{Notes} & none \\
         \hline
-        \textbf{Description} & A loadbalancer (Round Robin) is the entry point for \(N\) WebServers.
-        For each WebServer there exist a RabbitMQ server. There are \(M\) workers which access the queues of the queue servers.
+        \textbf{Description} & A loadbalancer (Round Robin) is the entry point for \(N\) webservers.
+        There are \(M\) backend workers. Workers and webservers communicate by connecting to a RabbitMQ
+        server or a RabbitMQ Cluster.
         Each worker stores data on the same database. \\
         \hline
     \end{tabular}
@@ -140,7 +142,7 @@
         \hline
         \textbf{Notes} & none \\
         \hline
-        \textbf{Description} & The network must scale with multiple servers. \\
+        \textbf{Description} & The network must scale horizontally with multiple servers. \\
         \hline
     \end{tabular}
 \end{center}

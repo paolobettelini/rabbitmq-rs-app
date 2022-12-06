@@ -5,58 +5,112 @@
 \subsection{Test protocol}
 
 \newcommand{\requirement}[5]{
-    %\bgroup{}
-    %\def\arraystretch{1.25}
-    %\begin{center}
-    %    \begin{tabular}{ |l|p{9cm}| }
-    %        \hline
-    %        \multicolumn{2}{|c|}{\textbf{Test-#1}} \\
-    %        \hline
-    %        \textbf{Name} & #2 \\
-    %        \hline
-    %        \textbf{Reference} & #3 \\
-    %        \hline
-    %        \textbf{Prerequisites} & #4 \\
-    %        \hline
-    %        \textbf{Description} &
-    %        \begin{itemize}
-    %            #5
-    %        \end{itemize}
-    %        \hline
-    %    \end{tabular}
-    %\end{center}
-    %\egroup{}
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{ |l|p{9cm}| }
+            \hline
+            \multicolumn{2}{|c|}{\textbf{Test-#1}} \\
+            \hline
+            \textbf{Name} & #2 \\
+            \hline
+            \textbf{Reference} & #3 \\
+            \hline
+            \textbf{Prerequisites} & #4 \\
+            \hline
+            \textbf{Description} &
+            \begin{itemize}
+                #5
+            \end{itemize} \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \egroup{}
 }
 
 \requirement{00}
-    {Name of test}
+    {Sign in}
     {Req-00}
     {Description}
     {
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
+        \item Go to the page and click register
+        \item Fill the form and submit it
+        \item Press logout to log out
+        \item Press login, fill the form and submit it
     }
 
 \requirement{01}
-    {Name of test}
-    {Req-01}
+    {Persistent authentication}
+    {Req-00\_0, Req-00\_1}
     {Description}
     {
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
+        \item Go to the page and log in or register
+        \item Close the browser and reopen the page
+        \item The user should still be logged in
     }
 
 \requirement{02}
-    {Name of test}
+    {Client-side hash}
+    {Req-00\_2}
+    {Description}
+    {
+        \item Go to the page
+        \item Whilst executing the log in or register sniff the HTTP packet
+        \item The packet should contain \(\text{base}_{64}(\text{SHA}_{256}(\text{password}))\)
+    }
+
+\requirement{03}
+    {Functionality}
+    {Req-01, Req-01\_0}
+    {Description}
+    {
+        \item Go to the page, log in and go to upload
+        \item Drop an image in the dropzone
+        \item The image should upload and an async progress should appear
+    }
+
+\requirement{04}
+    {Message queues}
     {Req-02}
     {Description}
     {
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
-        \item Lorem ipsum dolor
+        \item This requirement cannot be checked functionally
+        \item Check the code to ensure queues are used
     }
+
+\requirement{05}
+    {Gallery}
+    {Req-03, Req-01}
+    {Description}
+    {
+        \item Go to the page and log in or register
+        \item Go to the gallery. The uploaded images should be rendered.
+        \item Download the image at \texttt{/api/image/1} and check its properties.
+        \item The size should be 200x200 pixels and the format WebP.
+    }
+
+
+\requirement{06}
+    {Gallery chunks}
+    {Req-03\_0}
+    {Description}
+    {
+        \item Go to the page and log in or register
+        \item Go to upload and upload at least 10 images
+        \item Go to the gallery. Only the last \(N\) images should be rendered
+        \item Use the button to render more images
+    }
+
+\requirement{07}
+    {Network structure}
+    {Req-04}
+    {Description}
+    {
+        \item This cannot be checked funcationally
+        \item Check the code and topology of the instance
+            to ensure the requirement.
+    }
+
 
 \subsection{Test results}
 
@@ -67,15 +121,21 @@
         \hline
         \textbf{ID} & Result & Note \\
         \hline
-        \textbf{Test-00} & \color{red} Failed & Someting \\
+        \textbf{Test-00} & \color{darkgreen} Passed & - \\
         \hline
-        \textbf{Test-01} & \color{red} Failed & Someting \\
+        \textbf{Test-01} & \color{darkgreen} Passed & - \\
         \hline
-        \textbf{Test-02} & \color{red} Failed & Someting \\
+        \textbf{Test-02} & \color{darkgreen} Passed & - \\
         \hline
-        \textbf{Test-03} & \color{red} Failed & Someting \\
+        \textbf{Test-03} & \color{darkgreen} Passed & - \\
         \hline
-        \textbf{Test-03} & \color{red} Failed & Someting \\
+        \textbf{Test-04} & \color{darkgreen} Passed & - \\
+        \hline
+        \textbf{Test-05} & \color{darkgreen} Passed & Images are not displayed right away after login \\
+        \hline
+        \textbf{Test-06} & \color{darkgreen} Passed & - \\
+        \hline
+        \textbf{Test-07} & \color{darkgreen} Passed & - \\
         \hline
     \end{tabular}
 \end{center}

@@ -8,6 +8,7 @@
 *.synctex(busy)
 *.dvi
 *.log
+*.lof
 
 # Hyperref
 *.out

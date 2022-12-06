@@ -6,7 +6,7 @@ port = 8080
 # Alternately, comment the [rabbit] section and
 # set the enviroment variable
 #
-# AMQP_URL=
+# AMQP_URL=amqp://worker:root@192.168.1.11:5672/vhost
 [rabbit]
 address = "192.168.56.11"
 port = 5672

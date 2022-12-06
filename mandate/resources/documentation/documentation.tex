@@ -10,11 +10,14 @@
 \usepackage{listings}   % format code
 \usepackage{biblatex}   % references
 \usepackage{subfiles}   % project structure - best loaded last in the preamble
-\usepackage{graphicx}
+\usepackage{graphicx}   % images
+\usepackage{pdflscape}
+% local libraries
 \usepackage{listings-rust}
 \usepackage{tikz-uml}
 
 % Needed packages
+%
 % texlive-core
 % texlive-bibtexextra
 % texlive-latexextra
@@ -34,30 +37,10 @@
 \definecolor{lightgray}{rgb}{0.9,0.9,0.9}
 \definecolor{darkgreen}{rgb}{0, 0.6, 0.2}
 
+\newcommand{\quotes}[1]{``#1''}
 
 \lstdefinestyle{generic} {
     backgroundcolor=\color{lightgray},
-}
-
-\lstdefinestyle{sql} {
-    language=SQL,
-    backgroundcolor=\color{lightgray},
-    breakatwhitespace=false,
-    basicstyle=\footnotesize,
-    breaklines=true,
-    captionpos=b,
-    commentstyle=\color{dkgreen},
-    deletekeywords={...},
-    escapeinside={\%*}{*)},
-    extendedchars=true,
-    keepspaces=true,
-    keywordstyle=\color{blue},
-    morekeywords={*,modify,MODIFY,...},
-    numbers=none,
-    showspaces=false,
-    showstringspaces=false, 
-	showtabs=false,
-    stepnumber=1,
 }
 
 \colorlet{punct}{red!60!black}
@@ -65,10 +48,32 @@
 \definecolor{delim}{RGB}{20,105,176}
 \colorlet{numb}{magenta!60!black}
 
+\lstdefinestyle{sql} {
+    language=SQL,
+    backgroundcolor=\color{background},
+    frameround=fttt,
+    numbers=none,
+    breaklines=true,
+    keywordstyle=\color{blue}\bfseries, 
+    basicstyle=\ttfamily\color{red},
+    numberstyle=\color{black},
+    rulecolor=\color{black},
+    frame=lines,
+}
+
+\lstdefinelanguage{nginx}{
+    keywords={upstream, backend, listen, location, proxy_pass},
+    keywordstyle=\color{orange}\bfseries,
+    ndkeywords={server},
+    ndkeywordstyle=\color{blue}\bfseries,
+    numbers=none,
+    frame=lines,
+    backgroundcolor=\color{background}
+}
+
 \lstdefinelanguage{json}{
     basicstyle=\normalfont\ttfamily,
     numbers=none,
-    numberstyle=\scriptsize,
     stepnumber=1,
     numbersep=8pt,
     showstringspaces=false,
@@ -193,9 +198,13 @@
 
 \pagebreak
 
-\section{Planning}
+\begin{landscape}
+    
+    \section{Planning}
+    
+    \subfile{sections/planning}
 
-\subfile{sections/planning}
+\end{landscape}
 
 \pagebreak
 
@@ -241,7 +250,11 @@
 
 \pagebreak
 
-\section{References}
+\listoffigures
+
+\pagebreak
+
+\section*{References}
 
 \nocite{*}
 

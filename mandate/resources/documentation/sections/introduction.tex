@@ -4,9 +4,11 @@
 
 \subsection{Abstract}
 
+Message brokers have always been a critical part of many infrastructures.
+This architectural pattern allows for easy to horizontally scale networks.
 The goal of this project is to make a network infrastructure
-which extensively uses a messaging queue system (RabbitMQ).
-My additional personal requirement is to use the Rust programming language
+which uses a messaging system through a message broker (RabbitMQ\cite{rabbitmq}).
+My additional personal requirement is to use the Rust programming language\cite{rust}
 as much as possible.
 
 \subsection{Information}
@@ -18,7 +20,7 @@ This is a project of the Scuola Arti e Mestieri di Trevano (SAMT) under the foll
     \item \textbf{Year:} Fourth
     \item \textbf{Class:} Progetti Individuali
     \item \textbf{Supervisor:} Geo Petrini
-    \item \textbf{Title:} RabbitMQ prototype
+    \item \textbf{Title:} RabbitMQ based web app prototype
     \item \textbf{Start date}: 2022-09-29
     \item \textbf{Deadline}: 2022-12-07
 \end{itemize}
@@ -27,28 +29,41 @@ and the following requirements
 
 \begin{itemize}
     \item \textbf{Documentation}: a full documentation of the work done
-    \item \textbf{Diary}: constant changelog for each work session
-    \item \textbf{Source code}: working source code of the project
+    \item \textbf{Diary}: constant changelog for each working session
+    \item \textbf{Source code}: source code of the project
 \end{itemize}
 
 All the source code and documents can be found at
-\href{http://gitsam.cpt.local/2022\_2023\_1\_semestre/prototipo-rabbitmq}
-{http://gitsam.cpt.local/2022\_2023\_1\_semestre/prototipo-rabbitmq}
+\href{https://github.com/paolobettelini/rabbitmq-rs-app}
+{https://github.com/paolobettelini/rabbitmq-rs-app}
 \cite{gitrepo}.
-
-% todo change to GitHub
 
 \subsection{Structure}
 
-This document is structured as such:
+This document is structured as follows:
 
 % TODO
 \begin{enumerate}
     \item \hyperlink{section.1}{\textbf{Introduction:}}
         General information, requirements and scope of the project
-
     \item \hyperlink{section.2}{\textbf{Analysis:}}
-        Analysis
+        Analysis of the requirements and functionality
+    \item \hyperlink{section.3}{\textbf{Planning:}}
+        Waterfall planning
+    \item \hyperlink{section.4}{\textbf{Infrastructure:}}
+        Analysis of the infrastructure and network topology
+    \item \hyperlink{section.5}{\textbf{Technology:}}
+        List of main technologies used
+    \item \hyperlink{section.6}{\textbf{Implementation:}}
+        Applied logic and technologies to solve the task
+    \item \hyperlink{section.7}{\textbf{Structure:}}
+        Structure of the project folders
+    \item \hyperlink{section.8}{\textbf{Compilation and usage:}}
+        Compilation and usage of the executables
+    \item \hyperlink{section.9}{\textbf{Testing:}}
+        Test results
+    \item \hyperlink{section.10}{\textbf{Conclusion:}}
+        Personal conclusion and possible future development
 \end{enumerate}
 
 \end{document}

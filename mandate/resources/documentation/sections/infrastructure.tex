@@ -2,10 +2,18 @@
 
 \begin{document}
 
+The following diagram illustrates the network topology of the application.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{net.pdf}
     \caption{Network Infrastructure}
 \end{figure}
+
+The entry point is a load balancer which redirects the stream
+into one of the webservers. The webservers send and receive data
+from the RabbitMQ cluster which they are connected to. Likewise,
+the workers consume data from the same cluster and send message back.
+Every backend server is connected to the same database.
 
 \end{document}

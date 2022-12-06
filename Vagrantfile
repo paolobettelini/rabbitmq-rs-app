@@ -22,10 +22,9 @@ Vagrant.configure("2") do |config|
   RABBIT_COOKIE = "LSOEHRZCUPQIRNYDHUSL"
 
   DB_SERVER_IP = "#{BASE_NETWORK}.10"
-  MB_SERVER_IP1 = "#{BASE_NETWORK}.11"
-  MB_SERVER_IP2 = "#{BASE_NETWORK}.13"
-  MB_SERVER_IP3 = "#{BASE_NETWORK}.14"
-  WEB_SERVER_IP = "#{BASE_NETWORK}.12"
+  MB_SERVER_IP1 = "#{BASE_NETWORK}.11" # Main server
+  MB_SERVER_IP2 = "#{BASE_NETWORK}.12"
+  MB_SERVER_IP3 = "#{BASE_NETWORK}.13"
 
   config.vm.define "db" do |subconfig|
     subconfig.vm.box = BOX_IMAGE

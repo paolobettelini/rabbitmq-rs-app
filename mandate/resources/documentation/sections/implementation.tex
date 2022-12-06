@@ -6,11 +6,11 @@
 
 \subsubsection{Generating WebAssembly}
 
-WebAssembly code is copiled from Rust code using the \texttt{wasm-pack} tool.
+WebAssembly code is compiled from Rust code using the \texttt{wasm-pack} tool.
 The rust code uses the \texttt{wasm\_bindgen} crate to bind to WebAssembly.
 A function to export into the module might be written as
 
-\begin{lstlisting}[language=Rust]
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
 #[wasm_bindgen]
 pub fn hash(value: String) -> String {
     let data = value.as_bytes().to_vec();
@@ -57,30 +57,30 @@ and be able to call wasm function from JavaScript.
 
 \textbf{webpack.config.js}
 \begin{lstlisting}[style=js]
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const path = require('path');
+    const CopyWebpackPlugin = require("copy-webpack-plugin");
+    const path = require('path');
 
-module.exports = {
-  entry: {
-    login: "./www/login.js",
-    register: "./www/register.js",
-    upload: "./www/upload.js",
-    gallery: "./www/gallery.js"
-  },
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "[name].bundle.js",
-  },
-  mode: "development",
-  plugins: [
-    new CopyWebpackPlugin({
-      patterns: [ "www" ],
-    })
-  ],
-  experiments: {
-    asyncWebAssembly: true
-  }
-};
+    module.exports = {
+    entry: {
+        login: "./www/login.js",
+        register: "./www/register.js",
+        upload: "./www/upload.js",
+        gallery: "./www/gallery.js"
+    },
+    output: {
+        path: path.resolve(__dirname, "dist"),
+        filename: "[name].bundle.js",
+    },
+    mode: "development",
+    plugins: [
+        new CopyWebpackPlugin({
+        patterns: [ "www" ],
+        })
+    ],
+    experiments: {
+        asyncWebAssembly: true
+    }
+    };
 \end{lstlisting}
 
 To compile the website to static files run
@@ -99,6 +99,23 @@ we can do the following.
 
 The compiled file is called \texttt{login.bundle.js}
 which is what the HTML page will need to include (see webpack config).
+
+\subsubsection{Module contents}
+
+The wasm module \texttt{frontend} contains the following functions:
+\begin{itemize}
+    \item \lstinline[language=Rust]{validate_email(String) -> bool}
+    \item \lstinline[language=Rust]{validate_password(String) -> bool}
+    \item \lstinline[language=Rust]{validate_username(String) -> bool}
+    \item \lstinline[language=Rust]{hash(String) -> String}
+\end{itemize}
+
+\textbf{\color{red} Note}: the validation functions are defined
+in the \texttt{protocol::validation} Rust module. These functions
+are also used by the webserver to validate requests.
+This means that by modifying the validation logic in one point
+both the frontend and webserver are automatically updated
+since they share the same codebase.
 
 \pagebreak
 
@@ -286,6 +303,8 @@ The database service address must be passed using
 the \texttt{--database-url} parameter or by setting the \texttt{DATBASE\_URL}
 enviroment variable.
 
+\pagebreak
+
 \texttt{up.sql}
 \begin{lstlisting}[style=sql]
     CREATE TABLE user (
@@ -293,12 +312,14 @@ enviroment variable.
         mail VARCHAR(50) NOT NULL,
         username VARCHAR(25) NOT NULL,
         password BINARY(32) NOT NULL,
+        token BINARY(32) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     
     CREATE TABLE image (
-        id INT PRIMARY KEY AUTO_INCREMENT,
+        id INT NOT NULL,
         user_id INT NOT NULL,
+        PRIMARY KEY (id, user_id),
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         data BLOB NOT NULL,
         FOREIGN KEY (user_id)
@@ -306,15 +327,22 @@ enviroment variable.
                 ON UPDATE CASCADE
                 ON DELETE CASCADE
     );
+    
+    CREATE TABLE log (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        message VARCHAR(50) NOT NULL
+    );
 \end{lstlisting}
 
 \texttt{down.sql}
 \begin{lstlisting}[style=sql]
     DROP TABLE image;
     DROP TABLE user;
+    DROP TABLE log;
 \end{lstlisting}
 
-The migration can be included in the code at compile time using a macro and run
+The migration can be included in the code at compile-time using a macro and run
 at the start of the program, like so
 \begin{lstlisting}[language=Rust, style=boxed, numbers=none]
     fn run_embedded_migrations(connection: &mut MysqlConnection) {
@@ -327,6 +355,8 @@ at the start of the program, like so
 The traits \texttt{Queryable} and \texttt{Insertable} can be automatically derived
 for structures, such that diesel can execute queries and inserts directly with the structures
 themselves.
+
+\pagebreak
 
 \begin{lstlisting}[language=Rust, style=boxed, numbers=none]
     #[derive(Queryable, Debug)]
@@ -369,32 +399,23 @@ themselves.
     }
 \end{lstlisting}
 
-\pagebreak
-
 Queries and inserts are executed using the schema file.
 
 \begin{lstlisting}[language=Rust, style=boxed, numbers=none]
     use crate::schema::user::{username, token, dsl::user};
     use diesel::select;
+
     // select token of user with a given username
-    let result: Result<Vec<u8>, _> = user
+    let result = user
         .select(token)
         .filter(username.eq(name))
-        .first(connection);
+        .first::<Vec<u8>>(connection) // retrieve first element
+        .ok(); // convert Result<Vec<u8>, _> into Option<Vec<u8>>
 \end{lstlisting}
 
-\subsection{Load Balancer}
+\pagebreak
 
 \subsection{Messaging}
-
-\subsubsection{RabbitMQ}
-
-The binding to RabbitMQ is done via the \texttt{lapin} crate.
-
-
-% parlare anche degli ack
-
-\pagebreak
 
 \subsubsection{Request/Reply Pattern}
 
@@ -434,7 +455,24 @@ This method does not require the client to send an acknowledgment for the reply 
 
 \pagebreak
 
+\subsubsection{Binding}
+
+The binding to RabbitMQ is done via the \texttt{lapin} crate. \\
+Every message is published through the default exchange (\quotes{})
+in a queue named \quotes{queue}. Consumers take the name of \quotes{consumer}.
+% parlare anche degli ack
+
+\pagebreak
+
 \subsubsection{Messages}
+
+The following tables show the structures of every message
+in the protocol.
+
+\textbf{\color{red} Note}: these messages are converted to bytes
+using serialization functions which are automatically generated at compile-time.
+
+The type \textbf{Image} \(\equiv\) \textbf{Vec<u8>}.
 
 \newcommand{\tline}{
     \\ \hline
@@ -495,44 +533,46 @@ This method does not require the client to send an acknowledgment for the reply 
     \tline
     GetImage & GetImageData & Get image data packet
     \tline
+    GetImageResponse & GetImageResponseData & Get image response packet
+    \tline
     ShrinkAndUpload & ShrinkAndUploadData & Shrink and upload image packet
+    \tline
+    ShrinkAndUploadResponse & ShrinkAndUploadResponseData & Shrink and upload response
     \tline
     GetTotalImages & GetTotalImagesData & Get total images packet
     \tline
     GetTotalImagesResponse & GetTotalImagesResponseData & Get total images response
     \tline
-    ErrorResponse & ErrorResponseData & Error packet
+    Log & LogData & Log to database packet
 }
 
 \packettitle{LoginRequestData (struct)}
 \packetstruct{
-    mail & String & The mail
-    \tline
     username & String & The username
     \tline
     password & Vec<u8> & The password
 }
 
-\packettitle{LoginResponseData}
+\packettitle{LoginResponseData (enum)}
 \packetenum{
     Ok & LoginResponseDataOk & Positive login response
     \tline
     Err & LoginResponseDataErr & Negative login response
 }
 
-\packettitle{LoginResponseDataOk}
+\packettitle{LoginResponseDataOk (struct)}
 \packetstruct{
     token & Vec<u8> & The authentication token
 }
 
-\packettitle{LoginResponseDataErr}
+\packettitle{LoginResponseDataErr (enum)}
 \packetenum{
     NotFound & () & User was not not
     \tline
     WrongPassword & () & Password was incorrect
 }
 
-\packettitle{RegisterRequestData}
+\packettitle{RegisterRequestData (struct)}
 \packetstruct{
     mail & String & The mail
     \tline
@@ -541,58 +581,97 @@ This method does not require the client to send an acknowledgment for the reply 
     password & Vec<u8> & The password
 }
 
-\packettitle{RegisterResponseData}
+\packettitle{RegisterResponseData (enum)}
 \packetenum{
     Ok & (RegisterResponseDataOk) & Positive register response
     \tline
     Err & (RegisterResponseDataErr) & Negative register response
 }
 
-\packettitle{RegisterResponseDataOk}
+\packettitle{RegisterResponseDataOk (struct)}
 \packetstruct{
     token & Vec<u8> & The authentication token
 }
 
-\packettitle{RegisterResponseDataErr}
+\packettitle{RegisterResponseDataErr (enum)}
 \packetenum{
-    AlreadyExists & () & User already exists
+    MailAlreadyExists & () & mail already used
+    \tline
+    UsernameAlreadyExists & () & Username already exists
 }
 
-\packettitle{GetImageData}
+\packettitle{GetImageData (struct)}
 \packetstruct{
-    username & String & The username
-    \tline
     token & Vec<u8> & The auth token
     \tline
     index & u16 & The image index
 }
 
-\packettitle{ShrinkAndUploadData}
+\packettitle{ShrinkAndUploadData (struct)}
 \packetstruct{
-    username & String & The username
-    \tline
     token & Vec<u8> & The auth token
     \tline
     image & Image 6 The image
 }
 
-\packettitle{GetTotalImagesData}
+\packettitle{GetTotalImagesData (struct)}
 \packetstruct{
-    username & String & The username
-    \tline
     token & Vec<u8> & The auth token
 }
 
-\packettitle{GetTotalImagesResponseData}
+\packettitle{GetTotalImagesResponseData (enum)}
+\packetenum{
+    Ok & GetTotalImagesResponseDataOk & Positive response
+    \tline
+    Err & GetTotalImagesResponseDataErr & Negative response
+}
+
+\packettitle{GetTotalImagesResponseDataOk (struct)}
 \packetstruct{
     amount & u32 & The amount of images
 }
 
-\packettitle{ErrorResponseData}
+\packettitle{GetTotalImagesResponseDataErr (enum)}
 \packetenum{
-    AuthenticationRequired & () & Authentication failed
+    AuthenticationRequired & () & Authentication error
+}
+
+\packettitle{ShrinkAndUploadResponseData (enum)}
+\packetenum{
+    Ok & () & Positive response
     \tline
-    UnknownUsername & () & Username is unknown
+    Err & ShrinkAndUploadResponseDataErr & Negative response
+}
+
+\packettitle{ShrinkAndUploadResponseDataErr (enum)}
+\packetenum{
+    InvalidImage & () & Invalid image response
+    \tline
+    AuthenticationRequired & () & Authentication error
+}
+
+\packettitle{GetImageResponseData (enum)}
+\packetenum{
+    Ok & (GetImageResponseDataOk) & Positive response
+    \tline
+    Err & (GetImageResponseDataErr) & Negative response
+}
+
+\packettitle{GetImageResponseDataOk (struct)}
+\packetstruct{
+    data & Image & The image data
+}
+
+\packettitle{GetImageResponseDataErr (enum)}
+\packetenum{
+    InvalidIndex & () & Invalid index error
+    \tline
+    AuthenticationRequired & () & Authentication error
+}
+
+\packettitle{LogData (struct)}
+\packetstruct{
+    message & String & The message to log
 }
 
 \pagebreak
@@ -905,7 +984,7 @@ port = 8080
 # Alternately, comment the [rabbit] section and
 # set the enviroment variable
 #
-# AMQP_URL=
+# AMQP_URL=amqp://worker:root@192.168.1.11:5672/vhost
 [rabbit]
 address = "192.168.1.11"
 port = 5672
@@ -923,6 +1002,29 @@ vhost = "vhost"
 [log]
 log = "info"
 style = "auto"
+\end{lstlisting}
+
+\pagebreak
+
+\subsection{Load balancer}
+
+The load balancer is implemented via a simple
+\texttt{nginx}\cite{nginx} reverse proxy.
+
+\begin{lstlisting}[language=Nginx]
+    upstream backend {
+            server 192.168.56.15;
+            server 192.168.56.16;
+            server 192.168.56.17;
+        }
+        
+        server {
+            listen 80;
+    
+            location / {
+                proxy_pass http://backend;
+            }
+    }
 \end{lstlisting}
 
 \end{document}

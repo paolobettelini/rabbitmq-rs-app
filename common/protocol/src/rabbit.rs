@@ -136,7 +136,7 @@ pub enum GetImageResponseData {
 #[derive(Protocol, Debug, PartialEq)]
 #[protocol(discriminant = "integer")]
 pub struct GetImageResponseDataOk {
-    pub data: Vec<u8>
+    pub data: Image
 }
 
 #[derive(Protocol, Debug, PartialEq)]
