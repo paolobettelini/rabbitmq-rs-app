@@ -46,6 +46,8 @@ RabbitMQ is a popoular message broker implementing many messaging protocols.
 Message brokers such as RabbitMQ can make an infrastructure to route messages,
 validate them and transform them. Messages queue are used
 to store messages. Multiple consumers may consume messages from a queue. \\
-RabbitMQ servers can also form a cluster. \texttt{todo}
+RabbitMQ servers can also form a cluster.
+All the nodes in a cluster communicate between eachother and share the same
+state. A client may connect to just one rabbit node.
 
 \end{document}

@@ -25,6 +25,11 @@ Vagrant.configure("2") do |config|
   MB_SERVER_IP1 = "#{BASE_NETWORK}.11" # Main server
   MB_SERVER_IP2 = "#{BASE_NETWORK}.12"
   MB_SERVER_IP3 = "#{BASE_NETWORK}.13"
+  LB_SERVER_IP = "#{BASE_NETWORK}.14"
+
+  WEB_SERVER_IP1 = "#{BASE_NETWORK}.21"
+  WEB_SERVER_IP2 = "#{BASE_NETWORK}.22"
+  WEB_SERVER_IP3 = "#{BASE_NETWORK}.23"
 
   config.vm.define "db" do |subconfig|
     subconfig.vm.box = BOX_IMAGE
@@ -250,6 +255,68 @@ Vagrant.configure("2") do |config|
     rabbitmqctl reset
     rabbitmqctl join_cluster rabbit@server1
     rabbitmqctl start_app
+
+    date > /etc/vagrant_provisioned_at
+    EOF
+
+    subconfig.vm.provision "shell", inline: $setup
+  end
+
+  config.vm.define "lb" do |subconfig|
+    subconfig.vm.box = BOX_IMAGE
+
+    subconfig.vm.network :private_network,
+      ip: "#{LB_SERVER_IP}",
+      adapter: 2                  # HostOnly
+      # virtualbox__intnet: true  # Intnet
+
+    subconfig.vm.hostname = "server.lb"
+    subconfig.ssh.insert_key = SSH_INSERT_KEY
+
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.name = "LBServer"
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+
+    if Vagrant.has_plugin?("vagrant-proxyconf") && PROXY_ENABLED
+      subconfig.proxy.http = PROXY_HTTP
+      subconfig.proxy.https = PROXY_HTTPS
+      subconfig.proxy.no_proxy = PROXY_EXCLUDE
+    end
+    
+    CONF =
+    <<-EOF
+    events {}
+
+    http {
+      upstream backend {
+        server #{WEB_SERVER_IP1};
+        server #{WEB_SERVER_IP2};
+        server #{WEB_SERVER_IP3};
+      }
+
+      server {
+        listen 80;
+        server_name = prototype.com;
+
+        location / {
+          proxy_pass http://backend;
+        }
+      }
+    }
+    EOF
+
+    $setup = <<-EOF
+    sed -i '/SigLevel    = Required DatabaseOptional/c\\SigLevel = Never' /etc/pacman.conf
+    pacman -S archlinux-keyring openssl --noconfirm
+
+    pacman -Syu --noconfirm
+    pacman -S nginx --noconfirm
+
+    systemctl enable nginx
+    
+    echo "#{CONF}" > /etc/nginx/nginx.conf
 
     date > /etc/vagrant_provisioned_at
     EOF

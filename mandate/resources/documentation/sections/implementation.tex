@@ -460,7 +460,45 @@ This method does not require the client to send an acknowledgment for the reply 
 The binding to RabbitMQ is done via the \texttt{lapin} crate. \\
 Every message is published through the default exchange (\quotes{})
 in a queue named \quotes{queue}. Consumers take the name of \quotes{consumer}.
-% parlare anche degli ack
+
+The (own-made) \texttt{messaging} crate mainly exports the following functions:
+
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    pub async fn publish(
+        &self,
+        queue_name: &str,
+        payload: &[u8],
+    ) -> Result<PublisherConfirm, Box<dyn Error>>
+    
+    pub async fn publish_and_await_reply(
+        &self,
+        publish_queue: &str,
+        consumer_name: &str,
+        payload: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn Error>>
+
+    pub async fn consume_messages<D: lapin::ConsumerDelegate + 'static>(
+        &self,
+        queue_name: &str,
+        consumer_name: &str,
+        delegate: D,
+    )
+\end{lstlisting}
+
+The \textbf{publish\_and\_await\_reply}
+implements the \texttt{Request/Reply} pattern.
+It is important to note that when the publisher consumes
+from the pseudo-queue it cannot ack, so the following
+settings need to be set to the consumer:
+
+\begin{lstlisting}[language=Rust, style=boxed, numbers=none]
+    let consume_properties = BasicConsumeOptions {
+        no_local: false,
+        no_ack: true, // Important. Reply consumer cannot ACK
+        exclusive: false,
+        nowait: false,
+    };
+\end{lstlisting}
 
 \pagebreak
 
@@ -1012,18 +1050,22 @@ The load balancer is implemented via a simple
 \texttt{nginx}\cite{nginx} reverse proxy.
 
 \begin{lstlisting}[language=Nginx]
-    upstream backend {
+    events {}
+
+    http {
+        upstream backend {
             server 192.168.56.15;
             server 192.168.56.16;
             server 192.168.56.17;
         }
-        
+            
         server {
             listen 80;
     
             location / {
                 proxy_pass http://backend;
             }
+        }
     }
 \end{lstlisting}
 
