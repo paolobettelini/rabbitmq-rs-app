@@ -19,8 +19,12 @@ Vagrant.configure("2") do |config|
   SSH_INSERT_KEY = true
   PROXY_ENABLED = false
 
+  RABBIT_COOKIE = "LSOEHRZCUPQIRNYDHUSL"
+
   DB_SERVER_IP = "#{BASE_NETWORK}.10"
-  MB_SERVER_IP = "#{BASE_NETWORK}.11"
+  MB_SERVER_IP1 = "#{BASE_NETWORK}.11"
+  MB_SERVER_IP2 = "#{BASE_NETWORK}.13"
+  MB_SERVER_IP3 = "#{BASE_NETWORK}.14"
   WEB_SERVER_IP = "#{BASE_NETWORK}.12"
 
   config.vm.define "db" do |subconfig|
@@ -28,13 +32,14 @@ Vagrant.configure("2") do |config|
 
     subconfig.vm.network :private_network,
       ip: "#{DB_SERVER_IP}",
-      adapter: 2
+      adapter: 2                  # HostOnly
+      # virtualbox__intnet: true  # Intnet
 
     subconfig.vm.hostname = "server.db"
     subconfig.ssh.insert_key = SSH_INSERT_KEY
 
     subconfig.vm.provider "virtualbox" do |vb|
-      vb.name = "DBServerVM"
+      vb.name = "DBServer"
       vb.memory = "1024"
       vb.cpus = 1
     end
@@ -64,15 +69,16 @@ Vagrant.configure("2") do |config|
     date > /etc/vagrant_provisioned_at
     EOF
 
-    config.vm.provision "shell", inline: $setup
+    subconfig.vm.provision "shell", inline: $setup
   end
 
-  config.vm.define "mb" do |subconfig|
+  config.vm.define "mb1" do |subconfig|
     subconfig.vm.box = BOX_IMAGE
 
     subconfig.vm.network :private_network,
-      ip: "#{MB_SERVER_IP}",
-      adapter: 2
+      ip: "#{MB_SERVER_IP1}",
+      adapter: 2                  # HostOnly
+      # virtualbox__intnet: true  # Intnet
 
     subconfig.vm.network "forwarded_port", guest: 15672, host: 15672
 
@@ -80,7 +86,7 @@ Vagrant.configure("2") do |config|
     subconfig.ssh.insert_key = SSH_INSERT_KEY
 
     subconfig.vm.provider "virtualbox" do |vb|
-      vb.name = "MBServer"
+      vb.name = "MBServer1"
       vb.memory = "1024"
       vb.cpus = 1
     end
@@ -92,16 +98,21 @@ Vagrant.configure("2") do |config|
     end
     
     $setup = <<-EOF
+    sed -i '/SigLevel    = Required DatabaseOptional/c\\SigLevel = Never' /etc/pacman.conf
+    pacman -S archlinux-keyring openssl --noconfirm
+
     pacman -Syu --noconfirm
     pacman -S erlang rabbitmq --noconfirm
     
     # /etc/rabbitmq/rabbitmq-env.conf
-    # NODENAME=rabbit1@server
+    # NODENAME=rabbit@node01
     # NO_IP_ADDRESS=0.0.0.0
     # NODE_PORT=5672
     # cluster_formation.peer_discovery_backend = classic_config
-    # cluster_formation.classic_config.nodes.1 = rabbit1@server
-    # cluster_formation.classic_config.nodes.2 = rabbit2@server
+    # cluster_formation.classic_config.nodes.1 = rabbit@node02
+    # cluster_formation.classic_config.nodes.2 = rabbit@node03
+
+    # This is the first node
     
     systemctl enable rabbitmq
     systemctl start rabbitmq
@@ -110,27 +121,37 @@ Vagrant.configure("2") do |config|
     rabbitmqctl add_vhost #{MB_VHOST_NAME}
     rabbitmqctl set_permissions -p #{MB_VHOST_NAME} #{MB_USER} #{MB_USER_HOST_PERM}
     rabbitmqctl set_user_tags #{MB_USER} administrator
+    rabbitmqctl delete_user guest
 
     rabbitmq-plugins enable rabbitmq_management
     
+    systemctl stop rabbitmq
+
+    # Setup cluster
+    
+    echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
+
+    systemctl start rabbitmq
+
     date > /etc/vagrant_provisioned_at
     EOF
 
-    config.vm.provision "shell", inline: $setup
+    subconfig.vm.provision "shell", inline: $setup
   end
 
-  config.vm.define "web" do |subconfig|
+  config.vm.define "mb2" do |subconfig|
     subconfig.vm.box = BOX_IMAGE
 
     subconfig.vm.network :private_network,
-      ip: "#{WEB_SERVER_IP}",
-      adapter: 2
+      ip: "#{MB_SERVER_IP2}",
+      adapter: 2                  # HostOnly
+      # virtualbox__intnet: true  # Intnet
 
-    subconfig.vm.hostname = "server.web"
+    subconfig.vm.hostname = "server.mb"
     subconfig.ssh.insert_key = SSH_INSERT_KEY
 
     subconfig.vm.provider "virtualbox" do |vb|
-      vb.name = "WEBServer"
+      vb.name = "MBServer2"
       vb.memory = "1024"
       vb.cpus = 1
     end
@@ -142,13 +163,82 @@ Vagrant.configure("2") do |config|
     end
     
     $setup = <<-EOF
-    # TODO
+    sed -i '/SigLevel    = Required DatabaseOptional/c\\SigLevel = Never' /etc/pacman.conf
+    pacman -S archlinux-keyring openssl --noconfirm
+
     pacman -Syu --noconfirm
+    pacman -S erlang rabbitmq --noconfirm
+
+    systemctl enable rabbitmq
+    systemctl start rabbitmq
+
+    rabbitmq-plugins enable rabbitmq_management
     
+    echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
+    rabbitmqctl stop_app
+    rabbitmqctl reset
+    rabbitmqctl join_cluster rabbit@server1
+    rabbitmqctl start_app
+
     date > /etc/vagrant_provisioned_at
     EOF
 
-    config.vm.provision "shell", inline: $setup
+    subconfig.vm.provision "shell", inline: $setup
   end
-  
+
+  config.vm.define "mb3" do |subconfig|
+    subconfig.vm.box = BOX_IMAGE
+
+    subconfig.vm.network :private_network,
+      ip: "#{MB_SERVER_IP3}",
+      adapter: 2                  # HostOnly
+      # virtualbox__intnet: true  # Intnet
+
+    subconfig.vm.hostname = "server.mb"
+    subconfig.ssh.insert_key = SSH_INSERT_KEY
+
+    subconfig.vm.provider "virtualbox" do |vb|
+      vb.name = "MBServer3"
+      vb.memory = "1024"
+      vb.cpus = 1
+    end
+
+    if Vagrant.has_plugin?("vagrant-proxyconf") && PROXY_ENABLED
+      subconfig.proxy.http = PROXY_HTTP
+      subconfig.proxy.https = PROXY_HTTPS
+      subconfig.proxy.no_proxy = PROXY_EXCLUDE
+    end
+    
+    $setup = <<-EOF
+    sed -i '/SigLevel    = Required DatabaseOptional/c\\SigLevel = Never' /etc/pacman.conf
+    pacman -S archlinux-keyring openssl --noconfirm
+
+    pacman -Syu --noconfirm
+    pacman -S erlang rabbitmq --noconfirm
+
+    systemctl enable rabbitmq
+    systemctl start rabbitmq
+
+    rabbitmq-plugins enable rabbitmq_management
+
+    echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
+    rabbitmqctl stop_app
+    rabbitmqctl reset
+    rabbitmqctl join_cluster rabbit@server1
+    rabbitmqctl start_app
+
+    date > /etc/vagrant_provisioned_at
+    EOF
+
+    subconfig.vm.provision "shell", inline: $setup
+  end
+
 end
+
+# TODO: for each server before stop_app
+# /etc/rabbitmq/rabbitmq-env.conf
+# NODENAME=rabbit@server1
+# /etc/hosts
+# #{MB_SERVER_IP1} server1
+# #{MB_SERVER_IP2} server2
+# #{MB_SERVER_IP3} server3
