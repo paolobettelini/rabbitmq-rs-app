@@ -127,8 +127,13 @@ Vagrant.configure("2") do |config|
     
     systemctl stop rabbitmq
 
-    # Setup cluster
-    
+    # Hostnames
+    sed -i "/NODENAME=/c\\NODENAME=rabbit@server1" /etc/rabbitmq/rabbitmq-env.conf
+    echo "#{MB_SERVER_IP1} server1" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP2} server2" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP3} server3" | tee -a /etc/hosts
+
+    # Set cookie
     echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
 
     systemctl start rabbitmq
@@ -173,8 +178,18 @@ Vagrant.configure("2") do |config|
     systemctl start rabbitmq
 
     rabbitmq-plugins enable rabbitmq_management
+
+    # Hostnames
+    sed -i "/NODENAME=/c\\NODENAME=rabbit@server2" /etc/rabbitmq/rabbitmq-env.conf
+    echo "#{MB_SERVER_IP1} server1" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP2} server2" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP3} server3" | tee -a /etc/hosts
     
+    # Set cookie
     echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
+
+    systemctl restart rabbitmq
+
     rabbitmqctl stop_app
     rabbitmqctl reset
     rabbitmqctl join_cluster rabbit@server1
@@ -221,7 +236,17 @@ Vagrant.configure("2") do |config|
 
     rabbitmq-plugins enable rabbitmq_management
 
+    # Hostnames
+    sed -i "/NODENAME=/c\\NODENAME=rabbit@server3" /etc/rabbitmq/rabbitmq-env.conf
+    echo "#{MB_SERVER_IP1} server1" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP2} server2" | tee -a /etc/hosts
+    echo "#{MB_SERVER_IP3} server3" | tee -a /etc/hosts
+
+    # Set cookie
     echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
+
+    systemctl restart rabbitmq
+
     rabbitmqctl stop_app
     rabbitmqctl reset
     rabbitmqctl join_cluster rabbit@server1
@@ -234,11 +259,3 @@ Vagrant.configure("2") do |config|
   end
 
 end
-
-# TODO: for each server before stop_app
-# /etc/rabbitmq/rabbitmq-env.conf
-# NODENAME=rabbit@server1
-# /etc/hosts
-# #{MB_SERVER_IP1} server1
-# #{MB_SERVER_IP2} server2
-# #{MB_SERVER_IP3} server3
