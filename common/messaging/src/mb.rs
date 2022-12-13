@@ -128,8 +128,6 @@ impl Rabbit {
                 }
             }
         }
-
-        //Ok(pub_confirm)
     }
 
     pub async fn consume_messages<D: lapin::ConsumerDelegate + 'static>(

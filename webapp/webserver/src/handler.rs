@@ -68,6 +68,12 @@ pub fn get_routes(
         };
     }
 
+    macro_rules! log {
+        ($app:tt, $msg:tt) => {
+            $app.send_log_message(LogData { message: $msg.to_owned() }).await
+        }
+    }
+
     let index_page = warp::path::end()
         .and(cookie::optional::<String>("token"))
         .then(|token| async {
@@ -198,9 +204,11 @@ pub fn get_routes(
             let app = get_app();
 
             let response = app.send_login_request(login_req).await;
-
+            
             match response {
                 LoginResponseData::Ok(data) => {
+                    log!(app, "User sent successful login request");
+
                     // set cookie
                     let token = utils::to_base64(data.token);
                     let cookie = format!("token={}; Path=/; HttpOnly; Max-Age=1209600", token);
@@ -213,6 +221,8 @@ pub fn get_routes(
                         .unwrap();
                 }
                 LoginResponseData::Err(err) => {
+                    log!(app, "User sent failed login request");
+
                     let content = app.render_login(Some(err));
 
                     return Response::builder()
@@ -257,6 +267,8 @@ pub fn get_routes(
 
             match response {
                 RegisterResponseData::Ok(data) => {
+                    log!(app, "User sent successful register request");
+
                     // set cookie
                     let token = utils::to_base64(data.token);
                     let cookie = format!("token={}; Path=/; HttpOnly; Max-Age=1209600", token);
@@ -269,6 +281,7 @@ pub fn get_routes(
                         .unwrap();
                 }
                 RegisterResponseData::Err(err) => {
+                    log!(app, "User sent failed register request");
                     let content = app.render_register(Some(err));
 
                     return Response::builder()
@@ -363,6 +376,8 @@ pub fn get_routes(
 
                 let response = app.send_upload_request(upload_req).await;
 
+                log!(app, "User uploaded image");
+
                 return json_response!(response);
             }
 
@@ -390,6 +405,7 @@ pub fn get_routes(
             let get_image_req = GetImageData { token, index };
 
             let response = app.send_get_image_request(get_image_req).await;
+            log!(app, "User requested image");
 
             return Response::builder()
                 .status(StatusCode::OK)
@@ -419,6 +435,7 @@ pub fn get_routes(
             let get_request = GetTotalImagesData { token };
 
             let response = app.send_total_images_request(get_request).await;
+            log!(app, "User requested amount of images");
 
             return json_response!(response);
         });

@@ -246,6 +246,13 @@ impl App {
             vec![]
         }
     }
-}
 
-// global consumer name and queue name
+    pub async fn send_log_message(&self, data: LogData) {
+        let message = RabbitMessage::Log(data);
+        let payload = message.raw_bytes(&Settings::default()).unwrap();
+
+        self.rabbit
+            .publish_and_await_reply("queue", "consumer", &payload)
+            .await;
+    }
+}

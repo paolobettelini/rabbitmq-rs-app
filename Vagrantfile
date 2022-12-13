@@ -1,7 +1,8 @@
 Vagrant.configure("2") do |config|
 
   BOX_IMAGE = "generic/arch"
-  BASE_NETWORK = "192.168.56"
+  BASE_NETWORK = "192.168.56"   # For HostOnly
+  # BASE_NETWORK = "192.168.1"  # For intent
   
   PROXY_HTTP = "http://10.0.2.2:7777"
   PROXY_HTTPS = "http://10.0.2.2:7777"
@@ -121,12 +122,6 @@ Vagrant.configure("2") do |config|
     systemctl enable rabbitmq
     systemctl start rabbitmq
 
-    rabbitmqctl add_user #{MB_USER} #{MB_USER_PASS}
-    rabbitmqctl add_vhost #{MB_VHOST_NAME}
-    rabbitmqctl set_permissions -p #{MB_VHOST_NAME} #{MB_USER} #{MB_USER_HOST_PERM}
-    rabbitmqctl set_user_tags #{MB_USER} administrator
-    rabbitmqctl delete_user guest
-
     rabbitmq-plugins enable rabbitmq_management
     
     systemctl stop rabbitmq
@@ -141,6 +136,11 @@ Vagrant.configure("2") do |config|
     echo "#{RABBIT_COOKIE}" | tee /var/lib/rabbitmq/.erlang.cookie
 
     systemctl start rabbitmq
+
+    rabbitmqctl add_user #{MB_USER} #{MB_USER_PASS}
+    rabbitmqctl add_vhost #{MB_VHOST_NAME}
+    rabbitmqctl set_permissions -p #{MB_VHOST_NAME} #{MB_USER} #{MB_USER_HOST_PERM}
+    rabbitmqctl set_user_tags #{MB_USER} administrator
 
     date > /etc/vagrant_provisioned_at
     EOF

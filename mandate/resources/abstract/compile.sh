@@ -1,0 +1,20 @@
+#!/bin/bash
+
+MAIN_FILE="abstract"
+
+if [ "$1" = "--help" ] || [ "$1" == "-h" ]; then
+    echo "usage: ${0} [--bibtex]"
+
+    exit 0
+fi
+
+WORKING_DIR=`pwd`
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+
+cd $SCRIPT_DIR
+
+lualatex "${MAIN_FILE}.tex"
+
+mv "${MAIN_FILE}.pdf" ../../
+
+cd $WORKING_DIR

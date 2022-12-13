@@ -209,7 +209,7 @@ when needed.
 I used a template engine library for Rust called
 \href{https://github.com/Keats/tera}{tera}.
 Logic blocks can be integrated in the HTML file like so
-\begin{lstlisting}[language=html]
+\begin{lstlisting}[style=html]
 <ul>
 {% for user in users %}
     <li><a href="{{ user.url}}">{{ user.url }}</li>
@@ -217,7 +217,7 @@ Logic blocks can be integrated in the HTML file like so
 </ul>
 \end{lstlisting}
 
-HTML files containing templating needs to be stored in RAM.
+HTML files containing templating code need to be stored in RAM.
 When the webservers starts it loads from the \texttt{www} folder
 every file containing templating code.
 
@@ -262,7 +262,7 @@ It supports MySQL, Postgres and SQLite and can manage migrations.
 Diesel comes with a CLI tool to manage migrations.
 A configuration file (\texttt{diesel.toml}) may be placed in the cargo project.
 
-\begin{lstlisting}
+\begin{lstlisting}[style=toml, numbers=none]
 [migrations_directory]
 dir = "migrations" # folder containing the migrations
 \end{lstlisting}
@@ -614,7 +614,7 @@ The type \textbf{Image} \(\equiv\) \textbf{Vec<u8>}.
 \packetstruct{
     mail & String & The mail
     \tline
-    username & String 6 The username
+    username & String & The username
     \tline
     password & Vec<u8> & The password
 }
@@ -649,7 +649,7 @@ The type \textbf{Image} \(\equiv\) \textbf{Vec<u8>}.
 \packetstruct{
     token & Vec<u8> & The auth token
     \tline
-    image & Image 6 The image
+    image & Image & The image
 }
 
 \packettitle{GetTotalImagesData (struct)}
@@ -788,6 +788,8 @@ Here's a list of all the libraries used within the project
         sha2 & SHA-2 hash function family & 0.10.5 & \\
         \hline
         image & Imaging library & 0.24.5 & \\
+        \hline
+        webp & WebP format & 0.2.2 & \\
         \hline
         futures & Future and streams & 0.3.17 & \\
         \hline
